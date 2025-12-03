@@ -1,6 +1,7 @@
 package common;
 
 public class Graph<T> {
+    @SuppressWarnings("FieldMayBeFinal")
     private LinkedList<Vertex<T>> vertices;
 
     public Graph() {
