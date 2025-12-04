@@ -1,0 +1,122 @@
+Travel+ (Curly allium)
+
+
+Funcionamiento propuesto backend
+
+1. Handshake cliente-servidor
+
+2. Establecimiento de una comunicación segura utilizando ML-KEM o X25519 y Ed25519, depende de lo que sea más fácil implementar.
+
+3. Login según la request enviada. Código 100 para clientes, código 101 para administrador.
+
+4. Enviar y recibir requests al servidor utilizando los códigos considerados debajo.
+
+
+Consideraciones para backend
+
+ - Usuarios: Lista de amigos usando listas simples, estas listas se pueden utilizar para generar grafos tomándolas con listas de adyacencia.
+ - Paraderos: Grafo no dirigido con pesos en las aristas, considero conveniente utilizar lista de adyacencia.
+ - Base de datos: Mantener los datos de los clientes encriptados. Somos mejores que la reniec. Decidan si usar o no MySQL o SQLite3 o PostgreSQL, se puede hacer mucho con Postgre. Al menos las passwords hasheadas con salt.
+
+
+Bloques de códigos considerados
+
+0xx: Respuestas misceláneas
+ 000: Ping
+ 001: Echo
+ 002-068: No asignado
+ 069: Funni numero
+ 070-099: No asignado
+
+1xx: Login y conexiones
+ 100: Login usuario
+ 101: Login administrador
+ 102: Envío criptografía 
+ 103: Recepción criptografía
+ 104-199: No asignado
+
+2xx: Requests user
+ 200: Datos Usuario
+ 201: Pedir rutas
+ 202: Añadir amigo
+ 203: Eliminar amigo
+ 204: Datos mapa
+ 205: Registrar viaje
+ 206: Cambio contraseña
+ 207: Cambio otros datos
+ 208-299: No asignado
+
+3xx: Respuestas requests user
+ 300: Respuesta datos Usuario
+ 301: Respuesta pedir rutas
+ 302: Respuesta añadir amigo
+ 303: Respuesta eliminar amigo
+ 304: Respuesta datos mapa
+ 305: Respuesta registrar viaje
+ 306: Respuesta cambio contraseña
+ 307: Respuesta cambio otros datos
+ 308-399: No asignado
+
+4xx: Respuestas servidor
+ 400: Bad Request
+ 401: Sesión expirada
+ 402: Confianza perdida
+ 403: No permitido
+ 404: Servidor no disponible
+ 405: Servicio no disponible
+ 406-498: No asignado
+ 499: Error inesperado
+
+5xx: Requests admin
+ 500: Añadir paradero
+ 501: Eliminar paradero
+ 502: Añadir ruta
+ 503: Eliminar ruta
+ 504: Modificar paradero
+ 505: Modificar ruta
+ 506: Consultar logs 
+ 507: Consultar actividad usuario
+ 508: Suspender usuario
+ 509: Ipban usuario
+ 510: Paraderos más conectados
+ 511: Rutas más frecuentes
+ 512: Usuarios con mayor actividad
+ 513: Exportar datos
+ 514: Notificacion administradores
+ 515: Suspender un servicio
+ 516: Eliminar conecciones
+ 517: Time-out todos los usuarios
+ 518: Marcar servidor como en mantenimiento
+ 519-599: No asignado
+
+6xx: Respuestas requests admin
+ 600: Respuesta añadir paradero
+ 601: Respuesta eliminar paradero
+ 602: Respuesta añadir ruta
+ 603: Respuesta eliminar ruta
+ 604: Respuesta modificar paradero
+ 605: Respuesta modificar ruta
+ 606: Respuesta consultar logs 
+ 607: Respuesta consultar actividad usuario
+ 608: Respuesta suspender usuario
+ 609: Respuesta ipban usuario
+ 610: Respuesta paraderos más conectados
+ 611: Respuesta rutas más frecuentes
+ 612: Respuesta usuarios con mayor actividad
+ 613: Respuesta exportar datos
+ 614: Respuesta notificacion administradores
+ 615: Respuesta suspender un servicio
+ 616: Respuesta eliminar conecciones
+ 617: Respuesta time-out todos los usuarios
+ 618: Respuesta mRedisarcar servidor como en mantenimiento
+ 619-699: No asignado
+
+7xx: No asignado
+8xx: No asignado
+9xx: No asignado
+
+
+
+
+
+Fira code my beloved
