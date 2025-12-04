@@ -1,0 +1,1 @@
+DROP USER IF EXISTS 'NEXT_SUDO'@'localhost';

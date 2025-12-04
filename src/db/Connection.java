@@ -4,25 +4,18 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Connection {
-    // Database Configuration
-    private static final String URL = "jdbc:mysql://localhost:3306/NEXT?useSSL=false&serverTimezone=UTC";
-    private static final String USER = "root"; // CHANGE THIS to your MySQL username
-    private static final String PASSWORD = "password"; // CHANGE THIS to your MySQL password
+    private static final String URL = "jdbc:mysql://localhost:3306/NEXT";
+    private static final String USER = "NEXT_SUDO"; 
+    private static final String PASSWORD = "VerySecurePassword"; 
 
-    // Singleton instance
     private static java.sql.Connection instance = null;
 
-    // Private constructor to prevent instantiation
     private Connection() {}
 
-    /**
-     * Returns the singleton connection instance.
-     * If the connection is closed or null, it reconnects.
-     */
+
     public static java.sql.Connection getInstance() {
         try {
             if (instance == null || instance.isClosed()) {
-                // Load the driver explicitly (optional in newer JDBC versions but good practice)
                 try {
                     Class.forName("com.mysql.cj.jdbc.Driver");
                 } catch (ClassNotFoundException e) {
@@ -41,9 +34,6 @@ public class Connection {
         return instance;
     }
 
-    /**
-     * Safely closes the connection.
-     */
     public static void close() {
         try {
             if (instance != null && !instance.isClosed()) {
