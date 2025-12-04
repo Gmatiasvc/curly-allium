@@ -14,26 +14,26 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
 -- -----------------------------------------------------
--- Schema travelplus
+-- Schema nextDB
 -- -----------------------------------------------------
 
--- Drop the schema 'travelplus' if it exists to clean the environment
+-- Drop the schema 'nextDB' if it exists to clean the environment
 -- This fulfills the requirement to "drop everything and regenerate"
-DROP SCHEMA IF EXISTS `travelplus`;
+DROP SCHEMA IF EXISTS `nextDB`;
 
--- Create the schema 'travelplus' if it doesn't exist (it won't, because we just dropped it)
+-- Create the schema 'nextDB' if it doesn't exist (it won't, because we just dropped it)
 -- We set the default character set to utf8mb4 for full Unicode support
-CREATE SCHEMA IF NOT EXISTS `travelplus` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci ;
+CREATE SCHEMA IF NOT EXISTS `nextDB` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci ;
 
--- Select the 'travelplus' database for all subsequent operations
-USE `travelplus` ;
+-- Select the 'nextDB' database for all subsequent operations
+USE `nextDB` ;
 
 -- -----------------------------------------------------
--- Table `travelplus`.`usuario`
+-- Table `nextDB`.`usuario`
 -- -----------------------------------------------------
 
 -- Create the 'usuario' table to store standard user (client) information
-CREATE TABLE IF NOT EXISTS `travelplus`.`usuario` (
+CREATE TABLE IF NOT EXISTS `nextDB`.`usuario` (
   -- Primary Key: Unique ID for the user, auto-increments
   `id_usuario` INT NOT NULL AUTO_INCREMENT,
   -- The user's full real name, cannot be null
@@ -65,11 +65,11 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
--- Table `travelplus`.`administrador`
+-- Table `nextDB`.`administrador`
 -- -----------------------------------------------------
 
 -- Create the 'administrador' table to store admin credentials separately
-CREATE TABLE IF NOT EXISTS `travelplus`.`administrador` (
+CREATE TABLE IF NOT EXISTS `nextDB`.`administrador` (
   -- Primary Key: Unique ID for the admin
   `id_administrador` INT NOT NULL AUTO_INCREMENT,
   -- The admin's full name
@@ -94,11 +94,11 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
--- Table `travelplus`.`amigo`
+-- Table `nextDB`.`amigo`
 -- -----------------------------------------------------
 
 -- Create the 'amigo' table to represent friendships between users
-CREATE TABLE IF NOT EXISTS `travelplus`.`amigo` (
+CREATE TABLE IF NOT EXISTS `nextDB`.`amigo` (
   -- The ID of the user adding the friend
   `id_usuario` INT NOT NULL,
   -- The ID of the friend being added
@@ -110,11 +110,11 @@ CREATE TABLE IF NOT EXISTS `travelplus`.`amigo` (
   -- Foreign Key Constraint 1: Links 'id_usuario' to the 'usuario' table
   CONSTRAINT `amigo_ibfk_1`
     FOREIGN KEY (`id_usuario`)
-    REFERENCES `travelplus`.`usuario` (`id_usuario`),
+    REFERENCES `nextDB`.`usuario` (`id_usuario`),
   -- Foreign Key Constraint 2: Links 'id_amigo' to the 'usuario' table
   CONSTRAINT `amigo_ibfk_2`
     FOREIGN KEY (`id_amigo`)
-    REFERENCES `travelplus`.`usuario` (`id_usuario`))
+    REFERENCES `nextDB`.`usuario` (`id_usuario`))
 -- Use the InnoDB storage engine
 ENGINE = InnoDB
 -- Set default character set
@@ -124,11 +124,11 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
--- Table `travelplus`.`paradero`
+-- Table `nextDB`.`paradero`
 -- -----------------------------------------------------
 
 -- Create the 'paradero' table to store bus stop/location data
-CREATE TABLE IF NOT EXISTS `travelplus`.`paradero` (
+CREATE TABLE IF NOT EXISTS `nextDB`.`paradero` (
   -- Primary Key: Unique ID for the bus stop
   `id_paradero` INT NOT NULL AUTO_INCREMENT,
   -- Name of the stop, cannot be null
@@ -154,11 +154,11 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
--- Table `travelplus`.`ruta`
+-- Table `nextDB`.`ruta`
 -- -----------------------------------------------------
 
 -- Create the 'ruta' table to define routes between two paraderos
-CREATE TABLE IF NOT EXISTS `travelplus`.`ruta` (
+CREATE TABLE IF NOT EXISTS `nextDB`.`ruta` (
   -- Primary Key: Unique ID for the route
   `id_ruta` INT NOT NULL AUTO_INCREMENT,
   -- Foreign Key ID for the starting point (origin)
@@ -180,11 +180,11 @@ CREATE TABLE IF NOT EXISTS `travelplus`.`ruta` (
   -- Foreign Key Constraint: Links 'origen' to 'paradero' table
   CONSTRAINT `ruta_ibfk_1`
     FOREIGN KEY (`origen`)
-    REFERENCES `travelplus`.`paradero` (`id_paradero`),
+    REFERENCES `nextDB`.`paradero` (`id_paradero`),
   -- Foreign Key Constraint: Links 'destino' to 'paradero' table
   CONSTRAINT `ruta_ibfk_2`
     FOREIGN KEY (`destino`)
-    REFERENCES `travelplus`.`paradero` (`id_paradero`))
+    REFERENCES `nextDB`.`paradero` (`id_paradero`))
 -- Use the InnoDB storage engine
 ENGINE = InnoDB
 -- Set default character set
@@ -194,11 +194,11 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
--- Table `travelplus`.`estadistica_ruta`
+-- Table `nextDB`.`estadistica_ruta`
 -- -----------------------------------------------------
 
 -- Create 'estadistica_ruta' to store analytics data about routes
-CREATE TABLE IF NOT EXISTS `travelplus`.`estadistica_ruta` (
+CREATE TABLE IF NOT EXISTS `nextDB`.`estadistica_ruta` (
   -- The ID of the route this statistic belongs to
   `id_ruta` INT NOT NULL,
   -- A counter field (e.g., how many times used), defaults to 0
@@ -208,7 +208,7 @@ CREATE TABLE IF NOT EXISTS `travelplus`.`estadistica_ruta` (
   -- Foreign Key Constraint: Links 'id_ruta' to the 'ruta' table
   CONSTRAINT `estadistica_ruta_ibfk_1`
     FOREIGN KEY (`id_ruta`)
-    REFERENCES `travelplus`.`ruta` (`id_ruta`))
+    REFERENCES `nextDB`.`ruta` (`id_ruta`))
 -- Use the InnoDB storage engine
 ENGINE = InnoDB
 -- Set default character set
@@ -218,11 +218,11 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
--- Table `travelplus`.`historial_busqueda`
+-- Table `nextDB`.`historial_busqueda`
 -- -----------------------------------------------------
 
 -- Create 'historial_busqueda' to log user searches
-CREATE TABLE IF NOT EXISTS `travelplus`.`historial_busqueda` (
+CREATE TABLE IF NOT EXISTS `nextDB`.`historial_busqueda` (
   -- Primary Key: Unique ID for the history record
   `id_historial` INT NOT NULL AUTO_INCREMENT,
   -- The user who performed the search
@@ -242,15 +242,15 @@ CREATE TABLE IF NOT EXISTS `travelplus`.`historial_busqueda` (
   -- Foreign Key: Links to 'usuario'
   CONSTRAINT `historial_busqueda_ibfk_1`
     FOREIGN KEY (`id_usuario`)
-    REFERENCES `travelplus`.`usuario` (`id_usuario`),
+    REFERENCES `nextDB`.`usuario` (`id_usuario`),
   -- Foreign Key: Links origin to 'paradero'
   CONSTRAINT `historial_busqueda_ibfk_2`
     FOREIGN KEY (`origen`)
-    REFERENCES `travelplus`.`paradero` (`id_paradero`),
+    REFERENCES `nextDB`.`paradero` (`id_paradero`),
   -- Foreign Key: Links destination to 'paradero'
   CONSTRAINT `historial_busqueda_ibfk_3`
     FOREIGN KEY (`destino`)
-    REFERENCES `travelplus`.`paradero` (`id_paradero`))
+    REFERENCES `nextDB`.`paradero` (`id_paradero`))
 -- Use the InnoDB storage engine
 ENGINE = InnoDB
 -- Set default character set
@@ -260,11 +260,11 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
--- Table `travelplus`.`viaje`
+-- Table `nextDB`.`viaje`
 -- -----------------------------------------------------
 
 -- Create 'viaje' table to store actual trips taken
-CREATE TABLE IF NOT EXISTS `travelplus`.`viaje` (
+CREATE TABLE IF NOT EXISTS `nextDB`.`viaje` (
   -- Primary Key: Unique ID for the trip
   `id_viaje` INT NOT NULL AUTO_INCREMENT,
   -- The user who took the trip
@@ -290,15 +290,15 @@ CREATE TABLE IF NOT EXISTS `travelplus`.`viaje` (
   -- Foreign Key: Links to 'usuario'
   CONSTRAINT `viaje_ibfk_1`
     FOREIGN KEY (`id_usuario`)
-    REFERENCES `travelplus`.`usuario` (`id_usuario`),
+    REFERENCES `nextDB`.`usuario` (`id_usuario`),
   -- Foreign Key: Links to 'paradero' (origin)
   CONSTRAINT `viaje_ibfk_2`
     FOREIGN KEY (`origen`)
-    REFERENCES `travelplus`.`paradero` (`id_paradero`),
+    REFERENCES `nextDB`.`paradero` (`id_paradero`),
   -- Foreign Key: Links to 'paradero' (destination)
   CONSTRAINT `viaje_ibfk_3`
     FOREIGN KEY (`destino`)
-    REFERENCES `travelplus`.`paradero` (`id_paradero`))
+    REFERENCES `nextDB`.`paradero` (`id_paradero`))
 -- Use the InnoDB storage engine
 ENGINE = InnoDB
 -- Set default character set
