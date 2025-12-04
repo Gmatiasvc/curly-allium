@@ -3,15 +3,17 @@ package db;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+@SuppressWarnings("CallToPrintStackTrace")
 public class Connection {
+
     private static final String URL = "jdbc:mysql://localhost:3306/NEXT";
-    private static final String USER = "NEXT_SUDO"; 
-    private static final String PASSWORD = "VerySecurePassword"; 
+    private static final String USER = "NEXT_SUDO";
+    private static final String PASSWORD = "VerySecurePassword";
 
     private static java.sql.Connection instance = null;
 
-    private Connection() {}
-
+    private Connection() {
+    }
 
     public static java.sql.Connection getInstance() {
         try {
@@ -45,14 +47,14 @@ public class Connection {
         }
     }
 
-	public static void main(String[] args) {
-        System.out.println("Testing database connection...");
-        java.sql.Connection conn = Connection.getInstance();
-        if (conn != null) {
-            System.out.println("Test passed: Connection established.");
-            Connection.close();
-        } else {
-            System.err.println("Test failed: Could not establish connection.");
-        }
-    }
+    // public static void main(String[] args) {
+    //     System.out.println("Testing database connection...");
+    //     java.sql.Connection conn = Connection.getInstance();
+    //     if (conn != null) {
+    //         System.out.println("Test passed: Connection established.");
+    //         Connection.close();
+    //     } else {
+    //         System.err.println("Test failed: Could not establish connection.");
+    //     }
+    // }
 }
