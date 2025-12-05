@@ -45,24 +45,27 @@ public class DatabaseWrapper {
 
     
     
-    public boolean registerAdmin(String nombre, String usuario, String correo, String password) {
+    public boolean registerAdmin(String nombre, String correo, String password) {
+
+        if (this.permissionLevel < 0) {
+            return false;
+        }
         
         String salt = common.PasswordUtils.getSalt();
         String secureHash = common.PasswordUtils.hashPassword(password, salt);
 
-        String sql = "INSERT INTO usuario (nombre, nombre_usuario, correo, contraseña, salt, estado, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO usuario (nombre, correo, contraseña, salt, estado, fecha_registro) VALUES (?, ?, ?, ?, ?, ?)";
         
         if (this.conn == null) return false;
 
         try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             
             stmt.setString(1, nombre);
-            stmt.setString(2, usuario);
-            stmt.setString(3, correo);
-            stmt.setString(4, secureHash);
-            stmt.setString(5, salt);
-            stmt.setBoolean(6, true);    
-            stmt.setLong(7, System.currentTimeMillis());
+            stmt.setString(2, correo);
+            stmt.setString(3, secureHash);
+            stmt.setString(4, salt);
+            stmt.setBoolean(5, true);    
+            stmt.setLong(6, System.currentTimeMillis());
 
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;

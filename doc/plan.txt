@@ -33,7 +33,9 @@ Bloques de códigos considerados
  101: Login administrador
  102: Envío criptografía 
  103: Recepción criptografía
- 104-199: No asignado
+ 104: Registro usuario
+ 105: Registro administrador
+ 106-199: No asignado
 
 2xx: Requests user
  200: Datos Usuario

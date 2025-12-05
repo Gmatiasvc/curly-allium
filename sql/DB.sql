@@ -84,6 +84,8 @@ CREATE TABLE IF NOT EXISTS `NEXT`.`administrador` (
   `salt` VARCHAR(45) NOT NULL,
   -- Admin status: TRUE for active, FALSE for disabled. Defaults to TRUE.
   `estado` BOOLEAN NOT NULL DEFAULT TRUE,
+    -- The date the user registered. Stored as a BIGINT Unix timestamp (milliseconds).
+  `fecha_registro` BIGINT NOT NULL DEFAULT 0,
   
   -- Set the primary key
   PRIMARY KEY (`id_administrador`),
