@@ -76,4 +76,52 @@ public class DatabaseWrapper {
         }
     }
 
+    public boolean loginUser(String usuario, String password) {
+        String sql = "SELECT contraseña, salt FROM usuario WHERE nombre_usuario = ? AND estado = true";
+        
+        if (this.conn == null) return false;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, usuario);
+            var rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String storedHash = rs.getString("contraseña");
+                String salt = rs.getString("salt");
+                return common.PasswordUtils.verifyPassword(password, storedHash, salt);
+            } else {
+                return false;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean loginAdmin(String correo, String password) {
+        String sql = "SELECT contraseña, salt FROM usuario WHERE correo = ? AND estado = true";
+        
+        if (this.conn == null) return false;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, correo);
+            var rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String storedHash = rs.getString("contraseña");
+                String salt = rs.getString("salt");
+                return common.PasswordUtils.verifyPassword(password, storedHash, salt);
+            } else {
+                return false;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }
