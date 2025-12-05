@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS `NEXT`.`usuario` (
   `correo` VARCHAR(100) NULL DEFAULT NULL,
   -- The user's password, can be null initially
   `contraseña` VARCHAR(100) NULL DEFAULT NULL,
+  -- The password's salt
+  `salt` VARCHAR(45) NOT NULL,
   -- Account status: TRUE for active, FALSE for blocked/inactive. Defaults to TRUE (active).
   `estado` BOOLEAN NOT NULL DEFAULT TRUE,
   -- The date the user registered. Stored as a BIGINT Unix timestamp (milliseconds).
@@ -78,6 +80,8 @@ CREATE TABLE IF NOT EXISTS `NEXT`.`administrador` (
   `correo` VARCHAR(100) NOT NULL,
   -- The admin's password
   `contraseña` VARCHAR(100) NOT NULL,
+  -- The password's salt
+  `salt` VARCHAR(45) NOT NULL,
   -- Admin status: TRUE for active, FALSE for disabled. Defaults to TRUE.
   `estado` BOOLEAN NOT NULL DEFAULT TRUE,
   
