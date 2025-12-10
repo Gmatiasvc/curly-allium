@@ -54,7 +54,7 @@ public class DatabaseWrapper {
         String salt = common.PasswordUtils.getSalt();
         String secureHash = common.PasswordUtils.hashPassword(password, salt);
 
-        String sql = "INSERT INTO usuario (nombre, correo, contraseña, salt, estado, fecha_registro) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO administrador (nombre, correo, contraseña, salt, estado, fecha_registro) VALUES (?, ?, ?, ?, ?, ?)";
         
         if (this.conn == null) return false;
 
@@ -124,4 +124,98 @@ public class DatabaseWrapper {
         }
     }
 
+    public boolean addStop(String nombre, String distrito, String direccion, double latitud, double longitud) {
+
+        if (this.permissionLevel < 0) {
+            return false;
+        }
+
+        String sql = "INSERT INTO usuario (nombre, correo, contraseña, salt, estado, fecha_registro) VALUES (?, ?, ?, ?, ?, ?)";
+        
+        if (this.conn == null) return false;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            
+
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean addRoute(int origen, int destino, int tiempo, double distancia, boolean estado){
+        if (this.permissionLevel < 0) {
+            return false;
+        }
+
+        String sql = "INSERT INTO ruta (id_origen, id_destino, tiempo_estimado, distancia, estado) VALUES (?, ?, ?, ?, ?)";
+        
+        if (this.conn == null) return false;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, origen);
+            stmt.setInt(2, destino);
+            stmt.setInt(3, tiempo);
+            stmt.setDouble(4, distancia);
+            stmt.setBoolean(5, estado);
+
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeRout(int origen, int destino) {
+
+        if (this.permissionLevel < 0) {
+            return false;
+        }
+
+        String sql = "DELETE FROM ruta WHERE id_origen = ? AND id_destino = ?";
+        
+        if (this.conn == null) return false;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, origen);
+            stmt.setInt(2, destino);
+
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeStop(int stopId) {
+
+        if (this.permissionLevel < 0) {
+            return false;
+        }
+
+        String sql = "DELETE FROM parada WHERE id_parada = ?";
+        
+        if (this.conn == null) return false;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, stopId);
+
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
