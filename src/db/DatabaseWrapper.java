@@ -5,9 +5,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import objects.Route;
-import objects.Stop;
 import objects.User;
+import objects.Stop;
+import objects.Route;
 
 public class DatabaseWrapper {
 
@@ -18,12 +18,11 @@ public class DatabaseWrapper {
         this.permissionLevel = permissionLevel;
         this.conn = conn;
     }
+
     
-
-
     // 1xx: LOGIN Y CONEXIONES
-    
-    // 100: Datos Usuario
+
+    // 100: Login Usuario
     public boolean loginUser(String usuario, String password) {
         String sql = "SELECT contraseña, salt FROM usuario WHERE nombre_usuario = ? AND estado = true";
         if (this.conn == null) return false;
@@ -43,10 +42,9 @@ public class DatabaseWrapper {
             return false;
         }
     }
-
-    // 101: Datos Usuario
+    
+    // 101: Login Admin
     public boolean loginAdmin(String correo, String password) {
-        // CORRECCION: Consultaba tabla 'usuario' en lugar de 'administrador'
         String sql = "SELECT contraseña, salt FROM administrador WHERE correo = ? AND estado = true";
         if (this.conn == null) return false;
 
@@ -66,7 +64,7 @@ public class DatabaseWrapper {
         }
     }
 
-    // 104: Datos Usuario
+    // 104: Registrar Usuario
     public boolean registerUser(String nombre, String usuario, String correo, String password) {
         String salt = common.PasswordUtils.getSalt();
         String secureHash = common.PasswordUtils.hashPassword(password, salt);
@@ -91,10 +89,10 @@ public class DatabaseWrapper {
             return false;
         }
     }
-    
-    // 105: Datos Usuario
+
+    // 105: Registrar Admin
     public boolean registerAdmin(String nombre, String correo, String password) {
-        if (this.permissionLevel < 0) return false; // Solo admins pueden crear admins, supongo
+        if (this.permissionLevel < 0) return false; 
         
         String salt = common.PasswordUtils.getSalt();
         String secureHash = common.PasswordUtils.hashPassword(password, salt);
@@ -118,7 +116,7 @@ public class DatabaseWrapper {
             return false;
         }
     }
-    
+
 
 
     // 2xx: REQUESTS USER
@@ -136,8 +134,8 @@ public class DatabaseWrapper {
                         rs.getString("nombre"),
                         rs.getString("correo"),
                         rs.getBoolean("estado"),
-                        String.valueOf(rs.getLong("fecha_registro")), // Convertir long a String para el objeto User
-                        false // No es admin si viene de tabla usuario
+                        String.valueOf(rs.getLong("fecha_registro")), 
+                        false 
                     );
                 }
             }
@@ -221,7 +219,7 @@ public class DatabaseWrapper {
         }
     }
 
-    // 207: Cambio otros datos (Perfil)
+    // 207: Cambio otros datos 
     public boolean updateUserProfile(String currentUsername, String newName, String newEmail) {
         String sql = "UPDATE usuario SET nombre = ?, correo = ? WHERE nombre_usuario = ?";
         try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
@@ -235,9 +233,10 @@ public class DatabaseWrapper {
         }
     }
 
-    // =========================================================================
+
+    
     // 5xx: REQUESTS ADMIN
-    // =========================================================================
+    
 
     // 500: Añadir paradero
     public boolean addStop(String nombre, String distrito, String direccion, double latitud, double longitud) {
@@ -262,13 +261,18 @@ public class DatabaseWrapper {
         }
     }
 
-    // 501: Eliminar paradero
+    // 501: Eliminar paradero (CORREGIDO: Integridad referencial)
     public boolean removeStop(int stopId) {
         if (this.permissionLevel < 0) return false;
-        String sql = "DELETE FROM paradero WHERE id_paradero = ?";
-        
         if (this.conn == null) return false;
 
+        if (isStopInUse(stopId)) {
+            System.err.println("No se puede eliminar el paradero " + stopId + ": está en uso por rutas o viajes.");
+            return false;
+        }
+
+        String sql = "DELETE FROM paradero WHERE id_paradero = ?";
+        
         try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setInt(1, stopId);
             return stmt.executeUpdate() > 0;
@@ -276,6 +280,30 @@ public class DatabaseWrapper {
             e.printStackTrace(); 
             return false;
         }
+    }
+
+    private boolean isStopInUse(int stopId) {
+        String[] checks = {
+            "SELECT 1 FROM ruta WHERE origen = ? OR destino = ?",
+            "SELECT 1 FROM viaje WHERE origen = ? OR destino = ?",
+            "SELECT 1 FROM historial_busqueda WHERE origen = ? OR destino = ?"
+        };
+
+        try {
+            for (String sql : checks) {
+                try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+                    stmt.setInt(1, stopId);
+                    stmt.setInt(2, stopId);
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) return true; 
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return true; 
+        }
+        return false;
     }
 
     // 502: Añadir ruta
@@ -343,7 +371,6 @@ public class DatabaseWrapper {
     public boolean modifyRoute(int origen, int destino, int tiempo, double distancia, boolean estado) {
         if (this.permissionLevel < 0) return false;
 
-
         String sql = "UPDATE ruta SET tiempo = ?, distancia = ?, estado = ? WHERE origen = ? AND destino = ?";
         
         if (this.conn == null) return false;
@@ -375,7 +402,7 @@ public class DatabaseWrapper {
         }
     }
 
-    // 506 / 200 Helper: Obtener todos los paraderos (útil para mapas)
+    // 506 / 200 Helper: Obtener todos los paraderos 
     public List<Stop> getAllStops() {
         List<Stop> stops = new ArrayList<>();
         String sql = "SELECT nombre, distrito, dirección, latitud, longitud FROM paradero";
@@ -386,7 +413,7 @@ public class DatabaseWrapper {
             while (rs.next()) {
                 stops.add(new Stop(
                     rs.getString("nombre"),
-                    rs.getString("distrito") + ", " + rs.getString("dirección"),
+                    rs.getString("distrito") + ", " + rs.getString("dirección"), 
                     String.valueOf(rs.getDouble("latitud")),
                     String.valueOf(rs.getDouble("longitud"))
                 ));
@@ -397,7 +424,6 @@ public class DatabaseWrapper {
         return stops;
     }
 
-    // Helper: Obtener rutas para analítica o mapas
     public List<Route> getAllRoutes() {
         List<Route> routes = new ArrayList<>();
         String sql = "SELECT p1.nombre as origen, p2.nombre as destino, r.distancia, r.tiempo " +
@@ -410,12 +436,15 @@ public class DatabaseWrapper {
              ResultSet rs = stmt.executeQuery()) {
             
             while (rs.next()) {
+                double dist = rs.getDouble("distancia");
+                
                 routes.add(new Route(
                     rs.getString("origen"),
                     rs.getString("destino"),
-                    (int) rs.getDouble("distancia"), 
+                    dist,
                     rs.getInt("tiempo")
                 ));
+
             }
         } catch (SQLException e) {
             e.printStackTrace(); 
@@ -423,8 +452,8 @@ public class DatabaseWrapper {
         return routes;
     }
 
-    public List<String> getUserHistory(int userId) {
-        List<String> history = new ArrayList<>();
+    public ArrayList<String> getUserHistory(int userId) {
+        ArrayList<String> history = new ArrayList<>();
         
         if (this.permissionLevel < 0) {
             return null;
@@ -457,7 +486,7 @@ public class DatabaseWrapper {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); 
         }
         
         return history;

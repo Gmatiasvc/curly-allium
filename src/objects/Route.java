@@ -3,10 +3,10 @@ package objects;
 public class Route {
 	String start;
 	String end;
-	int distance;
+	double distance;
 	int time;
 	
-	public Route(String start, String end, int distance, int time) {
+	public Route(String start, String end, double distance, int time) {
 		this.start = start;
 		this.end = end;
 		this.distance = distance;
@@ -29,11 +29,11 @@ public class Route {
 		this.end = end;
 	}
 
-	public int getDistance() {
+	public double getDistance() {
 		return distance;
 	}
 
-	public void setDistance(int distance) {
+	public void setDistance(double distance) {
 		this.distance = distance;
 	}
 
