@@ -18,11 +18,55 @@ public class DatabaseWrapper {
         this.permissionLevel = permissionLevel;
         this.conn = conn;
     }
+    
 
-    // =========================================================================
+
     // 1xx: LOGIN Y CONEXIONES
-    // =========================================================================
+    
+    // 100: Datos Usuario
+    public boolean loginUser(String usuario, String password) {
+        String sql = "SELECT contraseña, salt FROM usuario WHERE nombre_usuario = ? AND estado = true";
+        if (this.conn == null) return false;
 
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            stmt.setString(1, usuario);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String storedHash = rs.getString("contraseña");
+                    String salt = rs.getString("salt");
+                    return common.PasswordUtils.verifyPassword(password, storedHash, salt);
+                }
+            }
+            return false;
+        } catch (SQLException e) {
+            e.printStackTrace(); 
+            return false;
+        }
+    }
+
+    // 101: Datos Usuario
+    public boolean loginAdmin(String correo, String password) {
+        // CORRECCION: Consultaba tabla 'usuario' en lugar de 'administrador'
+        String sql = "SELECT contraseña, salt FROM administrador WHERE correo = ? AND estado = true";
+        if (this.conn == null) return false;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            stmt.setString(1, correo);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String storedHash = rs.getString("contraseña");
+                    String salt = rs.getString("salt");
+                    return common.PasswordUtils.verifyPassword(password, storedHash, salt);
+                }
+            }
+            return false;
+        } catch (SQLException e) {
+            e.printStackTrace(); 
+            return false;
+        }
+    }
+
+    // 104: Datos Usuario
     public boolean registerUser(String nombre, String usuario, String correo, String password) {
         String salt = common.PasswordUtils.getSalt();
         String secureHash = common.PasswordUtils.hashPassword(password, salt);
@@ -43,11 +87,12 @@ public class DatabaseWrapper {
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
-
+    
+    // 105: Datos Usuario
     public boolean registerAdmin(String nombre, String correo, String password) {
         if (this.permissionLevel < 0) return false; // Solo admins pueden crear admins, supongo
         
@@ -69,55 +114,14 @@ public class DatabaseWrapper {
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
+    
 
-    public boolean loginUser(String usuario, String password) {
-        String sql = "SELECT contraseña, salt FROM usuario WHERE nombre_usuario = ? AND estado = true";
-        if (this.conn == null) return false;
 
-        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
-            stmt.setString(1, usuario);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String storedHash = rs.getString("contraseña");
-                    String salt = rs.getString("salt");
-                    return common.PasswordUtils.verifyPassword(password, storedHash, salt);
-                }
-            }
-            return false;
-        } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
-            return false;
-        }
-    }
-
-    public boolean loginAdmin(String correo, String password) {
-        // CORRECCION: Consultaba tabla 'usuario' en lugar de 'administrador'
-        String sql = "SELECT contraseña, salt FROM administrador WHERE correo = ? AND estado = true";
-        if (this.conn == null) return false;
-
-        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
-            stmt.setString(1, correo);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String storedHash = rs.getString("contraseña");
-                    String salt = rs.getString("salt");
-                    return common.PasswordUtils.verifyPassword(password, storedHash, salt);
-                }
-            }
-            return false;
-        } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
-            return false;
-        }
-    }
-
-    // =========================================================================
     // 2xx: REQUESTS USER
-    // =========================================================================
 
     // 200: Datos Usuario
     public User getUserData(String username) {
@@ -138,7 +142,7 @@ public class DatabaseWrapper {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
         }
         return null;
     }
@@ -156,7 +160,7 @@ public class DatabaseWrapper {
             stmt.setInt(2, friendId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -174,7 +178,7 @@ public class DatabaseWrapper {
             stmt.setInt(2, friendId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -195,7 +199,7 @@ public class DatabaseWrapper {
             stmt.setDouble(7, distancia);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -212,7 +216,7 @@ public class DatabaseWrapper {
             stmt.setString(3, username);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -226,7 +230,7 @@ public class DatabaseWrapper {
             stmt.setString(3, currentUsername);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -239,7 +243,6 @@ public class DatabaseWrapper {
     public boolean addStop(String nombre, String distrito, String direccion, double latitud, double longitud) {
         if (this.permissionLevel < 0) return false;
 
-        // CORRECCION: Estaba insertando en 'usuario' en vez de 'paradero'
         String sql = "INSERT INTO paradero (nombre, distrito, dirección, latitud, longitud) VALUES (?, ?, ?, ?, ?)";
         
         if (this.conn == null) return false;
@@ -254,7 +257,7 @@ public class DatabaseWrapper {
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -262,8 +265,6 @@ public class DatabaseWrapper {
     // 501: Eliminar paradero
     public boolean removeStop(int stopId) {
         if (this.permissionLevel < 0) return false;
-
-        // CORRECCION: Nombre de tabla 'paradero' y columna 'id_paradero'
         String sql = "DELETE FROM paradero WHERE id_paradero = ?";
         
         if (this.conn == null) return false;
@@ -272,7 +273,7 @@ public class DatabaseWrapper {
             stmt.setInt(1, stopId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -281,7 +282,6 @@ public class DatabaseWrapper {
     public boolean addRoute(int origen, int destino, int tiempo, double distancia, boolean estado) {
         if (this.permissionLevel < 0) return false;
 
-        // CORRECCION: Nombres de columnas según DB.sql son 'origen' y 'destino'
         String sql = "INSERT INTO ruta (origen, destino, tiempo, distancia, estado) VALUES (?, ?, ?, ?, ?)";
         
         if (this.conn == null) return false;
@@ -294,7 +294,7 @@ public class DatabaseWrapper {
             stmt.setBoolean(5, estado);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -303,7 +303,6 @@ public class DatabaseWrapper {
     public boolean removeRoute(int origen, int destino) {
         if (this.permissionLevel < 0) return false;
 
-        // CORRECCION: Columnas 'origen' y 'destino'
         String sql = "DELETE FROM ruta WHERE origen = ? AND destino = ?";
         
         if (this.conn == null) return false;
@@ -313,7 +312,7 @@ public class DatabaseWrapper {
             stmt.setInt(2, destino);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -322,7 +321,6 @@ public class DatabaseWrapper {
     public boolean modifyStop(int stopId, String nombre, String distrito, String direccion, double latitud, double longitud) {
         if (this.permissionLevel < 0) return false;
 
-        // CORRECCION: Tabla 'paradero' e 'id_paradero'
         String sql = "UPDATE paradero SET nombre = ?, distrito = ?, dirección = ?, latitud = ?, longitud = ? WHERE id_paradero = ?";
         
         if (this.conn == null) return false;
@@ -336,7 +334,7 @@ public class DatabaseWrapper {
             stmt.setInt(6, stopId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -345,8 +343,7 @@ public class DatabaseWrapper {
     public boolean modifyRoute(int origen, int destino, int tiempo, double distancia, boolean estado) {
         if (this.permissionLevel < 0) return false;
 
-        // CORRECCION: Columnas 'origen' y 'destino' y columna 'tiempo' en vez de 'tiempo_estimado' (verificando DB.sql)
-        // Nota: DB.sql dice `tiempo` INT NOT NULL.
+
         String sql = "UPDATE ruta SET tiempo = ?, distancia = ?, estado = ? WHERE origen = ? AND destino = ?";
         
         if (this.conn == null) return false;
@@ -359,7 +356,7 @@ public class DatabaseWrapper {
             stmt.setInt(5, destino);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -373,7 +370,7 @@ public class DatabaseWrapper {
             stmt.setString(1, username);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
             return false;
         }
     }
@@ -389,13 +386,13 @@ public class DatabaseWrapper {
             while (rs.next()) {
                 stops.add(new Stop(
                     rs.getString("nombre"),
-                    rs.getString("distrito") + ", " + rs.getString("dirección"), // Location combinada
+                    rs.getString("distrito") + ", " + rs.getString("dirección"),
                     String.valueOf(rs.getDouble("latitud")),
                     String.valueOf(rs.getDouble("longitud"))
                 ));
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
         }
         return stops;
     }
@@ -403,7 +400,6 @@ public class DatabaseWrapper {
     // Helper: Obtener rutas para analítica o mapas
     public List<Route> getAllRoutes() {
         List<Route> routes = new ArrayList<>();
-        // Un join para obtener nombres de paraderos sería ideal aquí, pero mantendré IDs por simplicidad o nombres si existen
         String sql = "SELECT p1.nombre as origen, p2.nombre as destino, r.distancia, r.tiempo " +
                      "FROM ruta r " +
                      "JOIN paradero p1 ON r.origen = p1.id_paradero " +
@@ -417,31 +413,57 @@ public class DatabaseWrapper {
                 routes.add(new Route(
                     rs.getString("origen"),
                     rs.getString("destino"),
-                    (int) rs.getDouble("distancia"), // Route objeto usa int distance? Ajustar si necesario.
+                    (int) rs.getDouble("distancia"), 
                     rs.getInt("tiempo")
                 ));
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
         }
         return routes;
     }
 
-    // =========================================================================
-    // UTILS / HELPERS
-    // =========================================================================
-
-    public ArrayList<String> getUserHistory(int userId) {
-        // TODO: Implementar consulta a tabla historial_busqueda o viaje
+    public List<String> getUserHistory(int userId) {
+        List<String> history = new ArrayList<>();
+        
         if (this.permissionLevel < 0) {
             return null;
         }
-        return new ArrayList<>();
+
+        String sql = "SELECT p1.nombre as origen, p2.nombre as destino, h.fecha " +
+                     "FROM historial_busqueda h " +
+                     "LEFT JOIN paradero p1 ON h.origen = p1.id_paradero " +
+                     "LEFT JOIN paradero p2 ON h.destino = p2.id_paradero " +
+                     "WHERE h.id_usuario = ? " +
+                     "ORDER BY h.fecha DESC";
+
+        if (this.conn == null) return history;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String origen = rs.getString("origen");
+                    String destino = rs.getString("destino");
+                    long fecha = rs.getLong("fecha");
+                    
+                    if (origen == null) origen = "Desconocido";
+                    if (destino == null) destino = "Desconocido";
+
+                    String fechaStr = new java.util.Date(fecha).toString();
+                    
+                    history.add("Búsqueda: " + origen + " -> " + destino + " [" + fechaStr + "]");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return history;
     }
 
-    /**
-     * Helper privado para obtener ID de usuario dado su nombre de usuario.
-     */
+
     private int getUserId(String username) {
         String sql = "SELECT id_usuario FROM usuario WHERE nombre_usuario = ?";
         try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
@@ -452,7 +474,7 @@ public class DatabaseWrapper {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Logger
+            e.printStackTrace(); 
         }
         return -1;
     }
