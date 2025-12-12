@@ -76,7 +76,7 @@ Bloques de códigos considerados
  503: Eliminar ruta
  504: Modificar paradero
  505: Modificar ruta
- 506: Consultar logs 
+ 506: Consultar datos usuario 
  507: Consultar actividad usuario
  508: Suspender usuario
  509: Ipban usuario
@@ -89,7 +89,8 @@ Bloques de códigos considerados
  516: Eliminar conecciones
  517: Time-out todos los usuarios
  518: Marcar servidor como en mantenimiento
- 519-599: No asignado
+ 519: Consultar logs
+ 520-599: No asignado
 
 6xx: Respuestas requests admin
  600: Respuesta añadir paradero

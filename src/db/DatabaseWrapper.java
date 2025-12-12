@@ -2,6 +2,8 @@ package db;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+
 public class DatabaseWrapper {
 
     private final int permissionLevel;
@@ -172,7 +174,7 @@ public class DatabaseWrapper {
         }
     }
 
-    public boolean removeRout(int origen, int destino) {
+    public boolean removeRoute(int origen, int destino) {
 
         if (this.permissionLevel < 0) {
             return false;
@@ -217,5 +219,69 @@ public class DatabaseWrapper {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public boolean modifyStop(int stopId, String nombre, String distrito, String direccion, double latitud, double longitud) {
+
+        if (this.permissionLevel < 0) {
+            return false;
+        }
+
+        String sql = "UPDATE parada SET nombre = ?, distrito = ?, direccion = ?, latitud = ?, longitud = ? WHERE id_parada = ?";
+        
+        if (this.conn == null) return false;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, nombre);
+            stmt.setString(2, distrito);
+            stmt.setString(3, direccion);
+            stmt.setDouble(4, latitud);
+            stmt.setDouble(5, longitud);
+            stmt.setInt(6, stopId);
+
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean modifyRoute(int origen, int destino, int tiempo, double distancia, boolean estado) {
+
+        if (this.permissionLevel < 0) {
+            return false;
+        }
+
+        String sql = "UPDATE ruta SET tiempo_estimado = ?, distancia = ?, estado = ? WHERE id_origen = ? AND id_destino = ?";
+        
+        if (this.conn == null) return false;
+
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, tiempo);
+            stmt.setDouble(2, distancia);
+            stmt.setBoolean(3, estado);
+            stmt.setInt(4, origen);
+            stmt.setInt(5, destino);
+
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public ArrayList<String> getUserHistory(int userId) {
+        
+        if (this.permissionLevel < 0) {
+            return null;
+        }
+
+        return new ArrayList<>();
     }
 }
