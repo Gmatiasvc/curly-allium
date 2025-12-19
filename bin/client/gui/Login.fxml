@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Rectangle2D?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" prefHeight="660.0" prefWidth="980.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="presentacion.LoginController">
+   <children>
+      <Pane prefHeight="660.0" prefWidth="490.0" style="-fx-background-color: #E6E6E6;">
+         <children>
+            <ImageView fitHeight="134.0" fitWidth="248.0" layoutX="121.0" layoutY="269.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../recursos/NEXT%20X3.png" />
+               </image>
+            </ImageView>
+         </children>
+      </Pane>
+      <Pane layoutX="490.0" prefHeight="660.0" prefWidth="490.0">
+         <children>
+            <TextField fx:id="txtEmail" layoutX="120.0" layoutY="234.0" prefHeight="40.0" prefWidth="250.0" promptText="example@gmail.com" style="-fx-background-color: #E6E6E6; -fx-background-radius: 12;">
+               <padding>
+                  <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+               </padding>
+            </TextField>
+            <Label layoutX="120.0" layoutY="197.0" text="Email">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </Label>
+            <ImageView fitHeight="82.0" fitWidth="176.0" layoutX="161.0" layoutY="97.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../recursos/NEXT%20X3.png" />
+               </image>
+               <viewport>
+                  <Rectangle2D />
+               </viewport>
+            </ImageView>
+            <Button fx:id="btnIniciarSesion" layoutX="120.0" layoutY="400.0" mnemonicParsing="false" onMouseClicked="#iniciarSesion" onMouseEntered="#btnIniciarSesionHoverEnter" onMouseExited="#btnIniciarSesionHoverExit" prefHeight="40.0" prefWidth="250.0" style="-fx-background-color: #2C2C2C; -fx-background-radius: 12;" text="Iniciar sesión" textFill="WHITE">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </Button>
+            <Button fx:id="btnCrearCuenta" layoutX="120.0" layoutY="460.0" mnemonicParsing="false" onMouseEntered="#btnCrearCuentaHoverEnter" onMouseExited="#btnCrearCuentaHoverExit" prefHeight="40.0" prefWidth="250.0" style="-fx-background-color: #FFCC00; -fx-background-radius: 12;" text="Crear cuenta">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </Button>
+            <Label layoutX="120.0" layoutY="295.0" text="Contraseña">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </Label>
+            <PasswordField fx:id="txtContraseña" layoutX="120.0" layoutY="330.0" prefHeight="40.0" prefWidth="250.0" promptText="tuContraseña" style="-fx-background-color: #E6E6E6; -fx-background-radius: 12;">
+               <padding>
+                  <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+               </padding>
+            </PasswordField>
+         </children>
+      </Pane>
+   </children>
+</AnchorPane>

@@ -1,0 +1,67 @@
+
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: #DDDDDD;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-padding: 5;
+}
+
+
+.table-view:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #2C2C2C;
+    -fx-background-radius: 15 15 0 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER;
+}
+
+
+.table-cell {
+    -fx-alignment: CENTER;
+    -fx-text-fill: #333333;
+    -fx-border-color: transparent;
+}
+
+.table-row-cell {
+    -fx-background-color: white;
+    -fx-border-color: transparent;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #F9F9F9;
+}
+
+
+.table-row-cell:hover {
+    -fx-background-color: #FFE082;
+}
+
+
+.table-row-cell:selected {
+    -fx-background-color: #FFCC33;
+    -fx-border-color: white;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-border-color: white;
+    -fx-text-fill: black;
+}
+
+.table-view .table-row-cell:selected:focused {
+    -fx-background-insets: 0;
+}
