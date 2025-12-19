@@ -1,12 +1,12 @@
-# TravelPlus
+# Next(tm)
 
-Este repositorio contiene el código fuente para TravelPlus, una aplicación basada en Java diseñada para la gestión de rutas de transporte, usuarios y viajes. El proyecto implementa una arquitectura Cliente-Servidor y utiliza estructuras de datos personalizadas para la gestión eficiente de la información.
+Este repositorio contiene el código fuente para Next(tm), una aplicación basada en Java diseñada para la gestión de rutas de transporte, usuarios y viajes. El proyecto implementa una arquitectura Cliente-Servidor y utiliza estructuras de datos personalizadas para la gestión eficiente de la información.
 
 
 
 ## Descripción
 
-TravelPlus es un sistema que permite modelar y gestionar una red de transporte. El núcleo del sistema se basa en una implementación propia de estructuras de datos (Grafos y Listas Enlazadas) para representar paraderos y rutas, evitando la dependencia excesiva de las colecciones estándar de Java para fines de aprendizaje y control granular.
+Next(tm) es un sistema que permite modelar y gestionar una red de transporte. El núcleo del sistema se basa en una implementación propia de estructuras de datos (Grafos y Listas Enlazadas) para representar paraderos y rutas, evitando la dependencia excesiva de las colecciones estándar de Java para fines de aprendizaje y control granular.
 
 El sistema está respaldado por una base de datos MySQL robusta que gestiona usuarios, administradores, historiales de viajes y la topología de la red de transporte.
 
@@ -22,7 +22,7 @@ El sistema está respaldado por una base de datos MySQL robusta que gestiona usu
 
 	- ```LinkedList & CircularList:``` Implementaciones propias de listas para el manejo de colecciones.
 
-- **Base de Datos Optimizada:** Esquema SQL (```travelplus```) que utiliza ```BIGINT``` para timestamps Unix y relaciones de integridad referencial.
+- **Base de Datos Optimizada:** Esquema SQL (```Next(tm)```) que utiliza ```BIGINT``` para timestamps Unix y relaciones de integridad referencial.
 
 - **Arquitectura Cliente-Servidor:** Separación lógica entre la interfaz del cliente y la lógica del servidor.
 
@@ -44,7 +44,7 @@ El código está organizado en los siguientes paquetes dentro de ```src/```:
 
 El script de generación se encuentra en ```sql/DB.sql```. Este script está diseñado para:
 
-1. Eliminar el esquema ```travelplus``` existente (si lo hay) para asegurar un estado limpio.
+1. Eliminar el esquema ```Next(tm)``` existente (si lo hay) para asegurar un estado limpio.
 
 2. Generar las tablas: ```usuario```, ```administrador```, ```paradero```, ```ruta```, ```viaje```, ```amigo```, ```historial_busqueda```, y ```estadistica_ruta```.
 

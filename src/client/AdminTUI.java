@@ -2,10 +2,10 @@ package client;
 
 import db.Connection;
 import db.DatabaseWrapper;
-import java.util.Scanner;
 import java.util.List;
-import objects.Stop;
+import java.util.Scanner;
 import objects.Route;
+import objects.Stop;
 import objects.User;
 
 public class AdminTUI {
@@ -26,7 +26,7 @@ public class AdminTUI {
     }
 
     public void start() {
-        System.out.println("=== Curly Allium (TravelPlus) Admin Console ===");
+        System.out.println("=== Curly Allium (Next (tm)) Admin Console ===");
         
         while (true) {
             if (!loggedIn) {
@@ -36,7 +36,7 @@ public class AdminTUI {
             }
         }
     }
- {}
+ 
 
     private void showLoginMenu() {
         System.out.println("\n--- Menú de Acceso ---");
@@ -86,7 +86,7 @@ public class AdminTUI {
             System.out.println("Error al registrar. El correo podría estar en uso.");
         }
     }
- {}
+ 
 
     private void showMainMenu() {
         System.out.println("\n--- Panel de Control (Admin: " + currentAdminEmail + ") ---");
@@ -110,7 +110,7 @@ public class AdminTUI {
             default -> System.out.println("Opción inválida.");
         }
     }
- {}
+ 
 
     private void manageStops() {
         System.out.println("\n--- Gestión de Paraderos ---");
@@ -176,7 +176,7 @@ public class AdminTUI {
             default -> System.out.println("Opción inválida.");
         }
     }
- {}
+ 
 
     private void manageRoutes() {
         System.out.println("\n--- Gestión de Rutas ---");
@@ -239,8 +239,8 @@ public class AdminTUI {
             case 0 -> {}
             default -> System.out.println("Opción inválida.");
         }
-    }
- {}
+    
+ }
 
     private void manageUsers() {
         System.out.println("\n--- Gestión de Usuarios ---");
@@ -286,7 +286,7 @@ public class AdminTUI {
             default -> System.out.println("Opción inválida.");
         }
     }
- {}
+ 
 
     private void showReports() {
         System.out.println("\n--- Reporte General ---");
@@ -322,7 +322,7 @@ public class AdminTUI {
         Connection.close();
         System.exit(0);
     }
- {}
+ 
 
     private int getIntInput() {
         while (true) {
