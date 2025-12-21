@@ -55,5 +55,19 @@ public class User {
 		this.isAdmin = isAdmin;
 	}
 
+	public static String serialize(User user){
+		return user.getName() + "¶" + user.getEmail() + "¶" + user.isActive() + "¶" + user.getCreatedAtUT() + "¶" + user.isAdmin();
+	}
+
+	public static User deserialize(String string){
+		String[] parts = string.split("¶");
+		return new User(
+			parts[0],
+			parts[1],
+			Boolean.parseBoolean(parts[2]),
+			parts[3],
+			Boolean.parseBoolean(parts[4])
+		);
+	}
 	
 }

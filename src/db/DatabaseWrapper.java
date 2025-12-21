@@ -5,18 +5,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import objects.User;
-import objects.Stop;
 import objects.Route;
+import objects.Stop;
+import objects.User;
 
 public class DatabaseWrapper {
 
     private final int permissionLevel;
     private final java.sql.Connection conn;
 
-    public DatabaseWrapper(int permissionLevel, java.sql.Connection conn) {
+    public DatabaseWrapper(int permissionLevel) {
         this.permissionLevel = permissionLevel;
-        this.conn = conn;
+        this.conn = Connection.getInstance();
     }
 
     
@@ -413,9 +413,10 @@ public class DatabaseWrapper {
             while (rs.next()) {
                 stops.add(new Stop(
                     rs.getString("nombre"),
-                    rs.getString("distrito") + ", " + rs.getString("dirección"), 
-                    String.valueOf(rs.getDouble("latitud")),
-                    String.valueOf(rs.getDouble("longitud"))
+                    rs.getString("dirección"),
+                    rs.getString("distrito"), 
+                    rs.getDouble("latitud"),
+                    rs.getDouble("longitud")
                 ));
             }
         } catch (SQLException e) {

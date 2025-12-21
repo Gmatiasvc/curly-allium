@@ -90,7 +90,7 @@ public class ServerMain {
 
         private Socket clientSocket;
         private String clientAddress;
-		private RequestHandler processor = new RequestHandler(); // Instance of Connection class to process requests
+		private UserRequestHandler processor = new UserRequestHandler(); // Instance of Connection class to process requests
 
         public ClientHandler(Socket clientSocket, String clientAddress) {
             this.clientSocket = clientSocket;

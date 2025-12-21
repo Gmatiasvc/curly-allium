@@ -22,41 +22,43 @@ Consideraciones para backend
 Bloques de códigos considerados
 
 0xx: Respuestas misceláneas
- 000: Ping
- 001: Echo
- 002-068: No asignado
- 069: Funni numero
+ *000: Ping
+ *001: Echo
+ *002-068: No asignado
+ *069: Funni numero
  070-099: No asignado
 
 1xx: Login y conexiones
- 100: Login usuario
- 101: Login administrador
+ *100: Login usuario
+ *101: Login administrador
  102: Envío criptografía 
  103: Recepción criptografía
- 104: Registro usuario
+ *104: Registro usuario
  105: Registro administrador
  106-199: No asignado
 
 2xx: Requests user
- 200: Datos Usuario
+ *200: Datos Usuario
  201: Pedir rutas
- 202: Añadir amigo
- 203: Eliminar amigo
+ *202: Añadir amigo
+ *203: Eliminar amigo
  204: Datos mapa
- 205: Registrar viaje
- 206: Cambio contraseña
- 207: Cambio otros datos
+ *205: Registrar viaje
+ *206: Cambio contraseña
+ *207: Cambio otros datos
+ *208: Untrust client
  208-299: No asignado
 
 3xx: Respuestas requests user
- 300: Respuesta datos Usuario
+ *300: Respuesta datos Usuario
  301: Respuesta pedir rutas
- 302: Respuesta añadir amigo
- 303: Respuesta eliminar amigo
+ *302: Respuesta añadir amigo
+ *303: Respuesta eliminar amigo
  304: Respuesta datos mapa
- 305: Respuesta registrar viaje
- 306: Respuesta cambio contraseña
- 307: Respuesta cambio otros datos
+ *305: Respuesta registrar viaje
+ *306: Respuesta cambio contraseña
+ *307: Respuesta cambio otros datos
+ *308: Respuesta untrust client
  308-399: No asignado
 
 4xx: Respuestas servidor
@@ -70,8 +72,8 @@ Bloques de códigos considerados
  499: Error inesperado
 
 5xx: Requests admin
- 500: Añadir paradero
- 501: Eliminar paradero
+ *500: Añadir paradero
+ *501: Eliminar paradero
  502: Añadir ruta
  503: Eliminar ruta
  504: Modificar paradero
