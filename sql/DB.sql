@@ -28,290 +28,89 @@ CREATE SCHEMA IF NOT EXISTS `NEXT` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4
 -- Select the 'NEXT' database for all subsequent operations
 USE `NEXT` ;
 
--- -----------------------------------------------------
--- Table `NEXT`.`usuario`
--- -----------------------------------------------------
 
--- Create the 'usuario' table to store standard user (client) information
-CREATE TABLE IF NOT EXISTS `NEXT`.`usuario` (
-  -- Primary Key: Unique ID for the user, auto-increments
-  `id_usuario` INT NOT NULL AUTO_INCREMENT,
-  -- The user's full real name, cannot be null
-  `nombre` VARCHAR(80) NOT NULL,
-  -- The user's username, cannot be null and must be unique typically
-  `nombre_usuario` VARCHAR(50) NOT NULL,
-  -- The user's email address, can be null initially
-  `correo` VARCHAR(100) NULL DEFAULT NULL,
-  -- The user's password, can be null initially
-  `contraseña` VARCHAR(100) NULL DEFAULT NULL,
-  -- The password's salt
-  `salt` VARCHAR(45) NOT NULL,
-  -- Account status: TRUE for active, FALSE for blocked/inactive. Defaults to TRUE (active).
-  `estado` BOOLEAN NOT NULL DEFAULT TRUE,
-  -- The date the user registered. Stored as a BIGINT Unix timestamp (milliseconds).
-  `fecha_registro` BIGINT NOT NULL DEFAULT 0,
-  -- REMOVED: `tipo` ENUM field. Roles are now separated by table.
-  
-  -- Set the primary key constraint on id_usuario
-  PRIMARY KEY (`id_usuario`),
-  -- Create a unique index on 'correo' so no two users can have the same email
-  UNIQUE INDEX `correo` (`correo` ASC) VISIBLE,
-  -- Create a unique index on 'nombre_usuario' so usernames are unique
-  UNIQUE INDEX `nombre_usuario` (`nombre_usuario` ASC) VISIBLE)
--- Use the InnoDB storage engine for transaction support
-ENGINE = InnoDB
--- Set the character set for the table
-DEFAULT CHARACTER SET = utf8mb4
--- Set the collation for text comparison
-COLLATE = utf8mb4_0900_ai_ci;
+CREATE TABLE usuario (
+  id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(80) NOT NULL,
+  correo VARCHAR(100) UNIQUE,
+  contraseña VARCHAR(100) NOT NULL,
+  salt VARCHAR(45) NOT NULL,
+  estado BOOLEAN DEFAULT TRUE,
+  fecha_registro BIGINT NOT NULL
+);
 
+CREATE TABLE rol (
+  id_rol INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(30) NOT NULL UNIQUE
+);
 
--- -----------------------------------------------------
--- Table `NEXT`.`administrador`
--- -----------------------------------------------------
+INSERT INTO rol (nombre) VALUES
+('PASAJERO'),
+('CONDUCTOR'),
+('ADMIN');
 
--- Create the 'administrador' table to store admin credentials separately
-CREATE TABLE IF NOT EXISTS `NEXT`.`administrador` (
-  -- Primary Key: Unique ID for the admin
-  `id_administrador` INT NOT NULL AUTO_INCREMENT,
-  -- The admin's full name
-  `nombre` VARCHAR(80) NOT NULL,
-  -- The admin's email address, must be unique
-  `correo` VARCHAR(100) NOT NULL,
-  -- The admin's password
-  `contraseña` VARCHAR(100) NOT NULL,
-  -- The password's salt
-  `salt` VARCHAR(45) NOT NULL,
-  -- Admin status: TRUE for active, FALSE for disabled. Defaults to TRUE.
-  `estado` BOOLEAN NOT NULL DEFAULT TRUE,
-    -- The date the user registered. Stored as a BIGINT Unix timestamp (milliseconds).
-  `fecha_registro` BIGINT NOT NULL DEFAULT 0,
-  
-  -- Set the primary key
-  PRIMARY KEY (`id_administrador`),
-  -- Ensure admin emails are unique
-  UNIQUE INDEX `correo_admin` (`correo` ASC) VISIBLE)
--- Use the InnoDB storage engine
-ENGINE = InnoDB
--- Set default character set
-DEFAULT CHARACTER SET = utf8mb4
--- Set collation
-COLLATE = utf8mb4_0900_ai_ci;
+CREATE TABLE usuario_rol (
+  id_usuario INT NOT NULL,
+  id_rol INT NOT NULL,
+  PRIMARY KEY (id_usuario, id_rol),
+  FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
+  FOREIGN KEY (id_rol) REFERENCES rol(id_rol)
+);
 
+CREATE TABLE conductor (
+  id_usuario INT PRIMARY KEY,
+  licencia VARCHAR(50) NOT NULL,
+  estado BOOLEAN DEFAULT FALSE,
+  fecha_aprobacion BIGINT,
+  FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
 
--- -----------------------------------------------------
--- Table `NEXT`.`amigo`
--- -----------------------------------------------------
+CREATE TABLE paradero (
+  id_paradero INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(80) NOT NULL UNIQUE,
+  distrito VARCHAR(60),
+  direccion VARCHAR(255),
+  longitud DOUBLE,
+  latitud DOUBLE
+);
 
--- Create the 'amigo' table to represent friendships between users
-CREATE TABLE IF NOT EXISTS `NEXT`.`amigo` (
-  -- The ID of the user adding the friend
-  `id_usuario` INT NOT NULL,
-  -- The ID of the friend being added
-  `id_amigo` INT NOT NULL,
-  -- Composite Primary Key: The combination of both IDs must be unique
-  PRIMARY KEY (`id_usuario`, `id_amigo`),
-  -- Index on id_amigo to speed up lookups by friend
-  INDEX `id_amigo` (`id_amigo` ASC) VISIBLE,
-  -- Foreign Key Constraint 1: Links 'id_usuario' to the 'usuario' table
-  CONSTRAINT `amigo_ibfk_1`
-    FOREIGN KEY (`id_usuario`)
-    REFERENCES `NEXT`.`usuario` (`id_usuario`),
-  -- Foreign Key Constraint 2: Links 'id_amigo' to the 'usuario' table
-  CONSTRAINT `amigo_ibfk_2`
-    FOREIGN KEY (`id_amigo`)
-    REFERENCES `NEXT`.`usuario` (`id_usuario`))
--- Use the InnoDB storage engine
-ENGINE = InnoDB
--- Set default character set
-DEFAULT CHARACTER SET = utf8mb4
--- Set collation
-COLLATE = utf8mb4_0900_ai_ci;
+CREATE TABLE ruta (
+  id_ruta INT AUTO_INCREMENT PRIMARY KEY,
+  origen INT NOT NULL,
+  destino INT NOT NULL,
+  tiempo DOUBLE NOT NULL,
+  distancia DOUBLE NOT NULL,
+  estado BOOLEAN DEFAULT TRUE,
+  FOREIGN KEY (origen) REFERENCES paradero(id_paradero),
+  FOREIGN KEY (destino) REFERENCES paradero(id_paradero)
+);
 
+CREATE TABLE viaje (
+  id_viaje INT AUTO_INCREMENT PRIMARY KEY,
+  id_conductor INT NOT NULL,
+  id_pasajero INT NOT NULL,
+  origen INT NOT NULL,
+  destino INT NOT NULL,
+  fecha BIGINT NOT NULL,
+  precio DOUBLE NOT NULL,
+  duracion INT NOT NULL,
+  distancia DOUBLE NOT NULL,
+  FOREIGN KEY (id_conductor) REFERENCES usuario(id_usuario),
+  FOREIGN KEY (id_pasajero) REFERENCES usuario(id_usuario),
+  FOREIGN KEY (origen) REFERENCES paradero(id_paradero),
+  FOREIGN KEY (destino) REFERENCES paradero(id_paradero)
+);
 
--- -----------------------------------------------------
--- Table `NEXT`.`paradero`
--- -----------------------------------------------------
-
--- Create the 'paradero' table to store bus stop/location data
-CREATE TABLE IF NOT EXISTS `NEXT`.`paradero` (
-  -- Primary Key: Unique ID for the bus stop
-  `id_paradero` INT NOT NULL AUTO_INCREMENT,
-  -- Name of the stop, cannot be null
-  `nombre` VARCHAR(80) NOT NULL,
-  -- District where the stop is located
-  `distrito` VARCHAR(60) NULL DEFAULT NULL,
-  -- Full address of the stop. VARCHAR(255) ensures it won't be truncated.
-  `dirección` VARCHAR(255) NULL DEFAULT NULL,
-  -- Geographical latitude of the stop
-  `latitud` DOUBLE NULL DEFAULT NULL,
-  -- Geographical longitude of the stop
-  `longitud` DOUBLE NULL DEFAULT NULL,
-  -- Set the primary key
-  PRIMARY KEY (`id_paradero`),
-  -- Ensure the name of the stop is unique across the database
-  UNIQUE INDEX `nombre` (`nombre` ASC) VISIBLE)
--- Use the InnoDB storage engine
-ENGINE = InnoDB
--- Set default character set
-DEFAULT CHARACTER SET = utf8mb4
--- Set collation
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
--- Table `NEXT`.`ruta`
--- -----------------------------------------------------
-
--- Create the 'ruta' table to define routes between two paraderos
-CREATE TABLE IF NOT EXISTS `NEXT`.`ruta` (
-  -- Primary Key: Unique ID for the route
-  `id_ruta` INT NOT NULL AUTO_INCREMENT,
-  -- Foreign Key ID for the starting point (origin)
-  `origen` INT NOT NULL,
-  -- Foreign Key ID for the ending point (destination)
-  `destino` INT NOT NULL,
-  -- Estimated time for the route. Changed to INT (minutes) for consistency.
-  `tiempo` INT NOT NULL,
-  -- Distance of the route
-  `distancia` DOUBLE NOT NULL,
-  -- Status of the route: TRUE (active) / FALSE (blocked). Defaults to TRUE.
-  `estado` BOOLEAN NOT NULL DEFAULT TRUE,
-  -- Set the primary key
-  PRIMARY KEY (`id_ruta`),
-  -- Index for faster queries filtering by origin
-  INDEX `origen` (`origen` ASC) VISIBLE,
-  -- Index for faster queries filtering by destination
-  INDEX `destino` (`destino` ASC) VISIBLE,
-  -- Foreign Key Constraint: Links 'origen' to 'paradero' table
-  CONSTRAINT `ruta_ibfk_1`
-    FOREIGN KEY (`origen`)
-    REFERENCES `NEXT`.`paradero` (`id_paradero`),
-  -- Foreign Key Constraint: Links 'destino' to 'paradero' table
-  CONSTRAINT `ruta_ibfk_2`
-    FOREIGN KEY (`destino`)
-    REFERENCES `NEXT`.`paradero` (`id_paradero`))
--- Use the InnoDB storage engine
-ENGINE = InnoDB
--- Set default character set
-DEFAULT CHARACTER SET = utf8mb4
--- Set collation
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
--- Table `NEXT`.`estadistica_ruta`
--- -----------------------------------------------------
-
--- Create 'estadistica_ruta' to store analytics data about routes
-CREATE TABLE IF NOT EXISTS `NEXT`.`estadistica_ruta` (
-  -- The ID of the route this statistic belongs to
-  `id_ruta` INT NOT NULL,
-  -- A counter field (e.g., how many times used), defaults to 0
-  `contador` INT NULL DEFAULT '0',
-  -- Primary Key is the route ID itself (one stat record per route)
-  PRIMARY KEY (`id_ruta`),
-  -- Foreign Key Constraint: Links 'id_ruta' to the 'ruta' table
-  CONSTRAINT `estadistica_ruta_ibfk_1`
-    FOREIGN KEY (`id_ruta`)
-    REFERENCES `NEXT`.`ruta` (`id_ruta`))
--- Use the InnoDB storage engine
-ENGINE = InnoDB
--- Set default character set
-DEFAULT CHARACTER SET = utf8mb4
--- Set collation
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
--- Table `NEXT`.`historial_busqueda`
--- -----------------------------------------------------
-
--- Create 'historial_busqueda' to log user searches
-CREATE TABLE IF NOT EXISTS `NEXT`.`historial_busqueda` (
-  -- Primary Key: Unique ID for the history record
-  `id_historial` INT NOT NULL AUTO_INCREMENT,
-  -- The user who performed the search
-  `id_usuario` INT NULL DEFAULT NULL,
-  -- The origin ID searched for
-  `origen` INT NULL DEFAULT NULL,
-  -- The destination ID searched for
-  `destino` INT NULL DEFAULT NULL,
-  -- When the search happened. Stored as BIGINT Unix timestamp (milliseconds).
-  `fecha` BIGINT NOT NULL DEFAULT 0,
-  -- Set the primary key
-  PRIMARY KEY (`id_historial`),
-  -- Indices for optimizing search history lookups
-  INDEX `id_usuario` (`id_usuario` ASC) VISIBLE,
-  INDEX `origen` (`origen` ASC) VISIBLE,
-  INDEX `destino` (`destino` ASC) VISIBLE,
-  -- Foreign Key: Links to 'usuario'
-  CONSTRAINT `historial_busqueda_ibfk_1`
-    FOREIGN KEY (`id_usuario`)
-    REFERENCES `NEXT`.`usuario` (`id_usuario`),
-  -- Foreign Key: Links origin to 'paradero'
-  CONSTRAINT `historial_busqueda_ibfk_2`
-    FOREIGN KEY (`origen`)
-    REFERENCES `NEXT`.`paradero` (`id_paradero`),
-  -- Foreign Key: Links destination to 'paradero'
-  CONSTRAINT `historial_busqueda_ibfk_3`
-    FOREIGN KEY (`destino`)
-    REFERENCES `NEXT`.`paradero` (`id_paradero`))
--- Use the InnoDB storage engine
-ENGINE = InnoDB
--- Set default character set
-DEFAULT CHARACTER SET = utf8mb4
--- Set collation
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
--- Table `NEXT`.`viaje`
--- -----------------------------------------------------
-
--- Create 'viaje' table to store actual trips taken
-CREATE TABLE IF NOT EXISTS `NEXT`.`viaje` (
-  -- Primary Key: Unique ID for the trip
-  `id_viaje` INT NOT NULL AUTO_INCREMENT,
-  -- The user who took the trip
-  `id_usuario` INT NOT NULL,
-  -- The starting point of the trip
-  `origen` INT NOT NULL,
-  -- The destination of the trip
-  `destino` INT NOT NULL,
-  -- The date of the trip. Stored as BIGINT Unix timestamp (milliseconds).
-  `fecha` BIGINT NOT NULL DEFAULT 0,
-  -- The cost of the trip
-  `precio` DOUBLE NOT NULL,
-  -- The duration of the trip in minutes (INT).
-  `duración` INT NOT NULL,
-  -- The distance covered
-  `distancia` DOUBLE NOT NULL,
-  -- Set the primary key
-  PRIMARY KEY (`id_viaje`),
-  -- Indices for optimization
-  INDEX `id_usuario` (`id_usuario` ASC) VISIBLE,
-  INDEX `origen` (`origen` ASC) VISIBLE,
-  INDEX `destino` (`destino` ASC) VISIBLE,
-  -- Foreign Key: Links to 'usuario'
-  CONSTRAINT `viaje_ibfk_1`
-    FOREIGN KEY (`id_usuario`)
-    REFERENCES `NEXT`.`usuario` (`id_usuario`),
-  -- Foreign Key: Links to 'paradero' (origin)
-  CONSTRAINT `viaje_ibfk_2`
-    FOREIGN KEY (`origen`)
-    REFERENCES `NEXT`.`paradero` (`id_paradero`),
-  -- Foreign Key: Links to 'paradero' (destination)
-  CONSTRAINT `viaje_ibfk_3`
-    FOREIGN KEY (`destino`)
-    REFERENCES `NEXT`.`paradero` (`id_paradero`))
--- Use the InnoDB storage engine
-ENGINE = InnoDB
--- Set default character set
-DEFAULT CHARACTER SET = utf8mb4
--- Set collation
-COLLATE = utf8mb4_0900_ai_ci;
-
+CREATE TABLE historial_busqueda (
+  id_historial INT AUTO_INCREMENT PRIMARY KEY,
+  id_usuario INT,
+  origen INT,
+  destino INT,
+  fecha BIGINT NOT NULL,
+  FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
+  FOREIGN KEY (origen) REFERENCES paradero(id_paradero),
+  FOREIGN KEY (destino) REFERENCES paradero(id_paradero)
+);
 
 -- Restore the previous SQL_MODE
 SET SQL_MODE=@OLD_SQL_MODE;

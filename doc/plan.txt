@@ -1,127 +1,120 @@
-Travel+ (Curly allium)
+Next (Curly allium) - Protocolo de Comunicación Backend/Frontend
 
+Este documento define el protocolo de comunicación por sockets entre el cliente (Prideful Oleander) y el servidor (Curly Allium).
+El objetivo es centralizar la lógica y el acceso a datos en el servidor, eliminando conexiones SQL directas desde el cliente.
 
-Funcionamiento propuesto backend
+--- ESTÁNDARES DE PROTOCOLO ---
 
-1. Handshake cliente-servidor
+Estructura General:
 
-2. Establecimiento de una comunicación segura utilizando ML-KEM o X25519 y Ed25519, depende de lo que sea más fácil implementar.
+Requests: CÓDIGO§Dato1§Dato2...
 
-3. Login según la request enviada. Código 100 para clientes, código 101 para administrador.
+Responses: CÓDIGO_RESPUESTA§Dato1§Dato2...
 
-4. Enviar y recibir requests al servidor utilizando los códigos considerados debajo.
+Delimitadores:
 
+§ (Sección): Separa el código de operación y los parámetros principales.
 
-Consideraciones para backend
+▓ (Lista): Separa objetos dentro de una lista (ej. Lista de Paraderos).
 
- - Usuarios: Lista de amigos usando listas simples, estas listas se pueden utilizar para generar grafos tomándolas con listas de adyacencia.
- - Paraderos: Grafo no dirigido con pesos en las aristas, considero conveniente utilizar lista de adyacencia.
- - Base de datos: Mantener los datos de los clientes encriptados. Somos mejores que la reniec. Decidan si usar o no MySQL o SQLite3 o PostgreSQL, se puede hacer mucho con Postgre. Al menos las passwords hasheadas con salt.
+¶ (Objeto): Separa los campos dentro de un objeto serializado (ej. atributos de un Usuario o Paradero).
 
+Ejemplo de Lista:
+304§Paradero1ID¶Nombre¶Lat¶Lon▓Paradero2ID¶Nombre¶Lat¶Lon
 
-Bloques de códigos considerados
+--- BLOQUES DE CÓDIGOS ---
 
-0xx: Respuestas misceláneas
- *000: Ping
- *001: Echo
- *002-068: No asignado
- *069: Funni numero
- 070-099: No asignado
+0xx: Utilidades
+*000: Ping
+*001: Echo
+*002: Handshake / Exchange Crypto Keys (Futuro)
 
-1xx: Login y conexiones
- *100: Login usuario
- *101: Login administrador
- 102: Envío criptografía 
- 103: Recepción criptografía
- *104: Registro usuario
- 105: Registro administrador
- 106-199: No asignado
+1xx: Autenticación y Registro
+*100: Login Genérico (Pasajero/Conductor) -> Retorna Rol
+*101: Login Administrador
+*104: Registro Pasajero
+*105: Registro Administrador
+*106: Registro Conductor (Nuevo)
 
-2xx: Requests user
- *200: Datos Usuario
- 201: Pedir rutas
- *202: Añadir amigo
- *203: Eliminar amigo
- 204: Datos mapa
- *205: Registrar viaje
- *206: Cambio contraseña
- *207: Cambio otros datos
- *208: Untrust client
- 208-299: No asignado
+2xx: Cliente (Pasajero) - Operaciones
+*200: Obtener Datos de Perfil (Usuario actual)
+*201: Obtener Mapa - Paraderos (Para construir el Grafo)
+*202: Obtener Mapa - Rutas (Para construir el Grafo)
+*205: Solicitar Viaje (Crear solicitud)
+*206: Consultar Estado de Viaje Actual (Polling)
+*207: Actualizar Perfil
+*208: Cancelar Viaje
+*209: Obtener Historial de Viajes
 
-3xx: Respuestas requests user
- *300: Respuesta datos Usuario
- 301: Respuesta pedir rutas
- *302: Respuesta añadir amigo
- *303: Respuesta eliminar amigo
- 304: Respuesta datos mapa
- *305: Respuesta registrar viaje
- *306: Respuesta cambio contraseña
- *307: Respuesta cambio otros datos
- *308: Respuesta untrust client
- 308-399: No asignado
+3xx: Respuestas a Cliente (2xx)
+*300: Resp. Perfil (Nombre¶Correo¶Rol...)
+*301: Resp. Lista Paraderos (ID¶Nombre¶Distrito¶Direccion¶Lat¶Lon separados por ▓)
+*302: Resp. Lista Rutas (ID¶OrigenID¶DestinoID¶Distancia¶Tiempo separados por ▓)
+*305: Resp. Solicitud Viaje (ViajeID¶Estado)
+*306: Resp. Estado Viaje (Estado -> Pendiente, Aceptado, EnCurso, Finalizado)
+*309: Resp. Historial (Lista de Viajes)
 
-4xx: Respuestas servidor
- 400: Bad Request
- 401: Sesión expirada
- 402: Confianza perdida
- 403: No permitido
- 404: Servidor no disponible
- 405: Servicio no disponible
- 406-498: No asignado
- 499: Error inesperado
+5xx: Administrador - Gestión
+*500: Añadir Paradero
+*501: Eliminar Paradero
+*502: Añadir Ruta
+*503: Eliminar Ruta
+*504: Modificar Paradero
+*505: Modificar Ruta
+*506: Listar Usuarios
+*508: Suspender Usuario/Conductor
 
-5xx: Requests admin
- *500: Añadir paradero
- *501: Eliminar paradero
- 502: Añadir ruta
- 503: Eliminar ruta
- 504: Modificar paradero
- 505: Modificar ruta
- 506: Consultar datos usuario 
- 507: Consultar actividad usuario
- 508: Suspender usuario
- 509: Ipban usuario
- 510: Paraderos más conectados
- 511: Rutas más frecuentes
- 512: Usuarios con mayor actividad
- 513: Exportar datos
- 514: Notificacion administradores
- 515: Suspender un servicio
- 516: Eliminar conecciones
- 517: Time-out todos los usuarios
- 518: Marcar servidor como en mantenimiento
- 519: Consultar logs
- 520-599: No asignado
+6xx: Respuestas a Administrador (5xx)
+*600: Confirmación Genérica (Éxito/Fallo)
+*606: Resp. Lista Usuarios
 
-6xx: Respuestas requests admin
- 600: Respuesta añadir paradero
- 601: Respuesta eliminar paradero
- 602: Respuesta añadir ruta
- 603: Respuesta eliminar ruta
- 604: Respuesta modificar paradero
- 605: Respuesta modificar ruta
- 606: Respuesta consultar logs 
- 607: Respuesta consultar actividad usuario
- 608: Respuesta suspender usuario
- 609: Respuesta ipban usuario
- 610: Respuesta paraderos más conectados
- 611: Respuesta rutas más frecuentes
- 612: Respuesta usuarios con mayor actividad
- 613: Respuesta exportar datos
- 614: Respuesta notificacion administradores
- 615: Respuesta suspender un servicio
- 616: Respuesta eliminar conecciones
- 617: Respuesta time-out todos los usuarios
- 618: Respuesta mRedisarcar servidor como en mantenimiento
- 619-699: No asignado
+7xx: Conductor - Operaciones
+*700: Obtener Solicitudes Pendientes (Radio de acción o todas)
+*701: Aceptar Viaje
+*702: Actualizar Estado de Viaje (Iniciar/Finalizar)
+*703: Obtener Historial Conductor
 
-7xx: No asignado
-8xx: No asignado
-9xx: No asignado
+8xx: Respuestas a Conductor (7xx)
+*800: Resp. Lista Solicitudes (ViajeID¶OrigenNombre¶DestinoNombre¶Distancia separados por ▓)
+*801: Confirmación Aceptación
 
+4xx: Errores del Servidor
+400: Bad Request (Formato incorrecto)
+401: Unauthorized (Login fallido)
+403: Forbidden (Permisos insuficientes)
+404: Not Found (Recurso no encontrado)
+500: Internal Server Error
 
+--- DETALLE DE OBJETOS SERIALIZADOS (Usando ¶) ---
 
+Usuario: Nombre¶Correo¶EsAdmin¶EsConductor¶Estado
 
+Paradero: ID¶Nombre¶Distrito¶Direccion¶Latitud¶Longitud
 
-Fira code my beloved
+Ruta: ID¶OrigenID¶DestinoID¶Tiempo¶Distancia¶Estado
+
+Viaje/Solicitud: ID¶UsuarioID¶OrigenID¶DestinoID¶Precio¶Estado
+
+--- FLUJO DE TRABAJO SUGERIDO (FRONTEND MIGRATION) ---
+
+Inicio: El cliente se conecta al socket y realiza Handshake.
+
+Login: Envía 100 o 101. Recibe token o confirmación.
+
+Carga Mapa: Cliente envía 201 y 202. Servidor consulta DB y retorna listas con ▓. BLMapa en cliente reconstruye el Grafo.
+
+Solicitar Taxi:
+
+Pasajero envía 205 con Origen/Destino.
+
+Servidor guarda en DB (estado: PENDIENTE).
+
+Conductor:
+
+Envía 700 (polling). Servidor busca viajes PENDIENTES.
+
+Envía 701 para aceptar. Servidor actualiza estado a ACEPTADO.
+
+Actualización:
+
+Pasajero consulta 206 y ve que el estado cambió a ACEPTADO. Muestra UI de "Conductor en camino".
