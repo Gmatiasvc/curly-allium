@@ -22,7 +22,6 @@ public class PasswordUtils {
         return Base64.getEncoder().encodeToString(salt);
     }
 
-
     public static String hashPassword(String password, String salt) {
         char[] chars = password.toCharArray();
         byte[] bytes = Base64.getDecoder().decode(salt);
@@ -40,7 +39,8 @@ public class PasswordUtils {
         }
     }
 
-    public static boolean verifyPassword(String providedPassword, String storedSalt, String storedHash) {
+    // FIXED: Swapped parameters to match usage: (password, hash, salt)
+    public static boolean verifyPassword(String providedPassword, String storedHash, String storedSalt) {
         String newHash = hashPassword(providedPassword, storedSalt);
         return newHash.equals(storedHash);
     }

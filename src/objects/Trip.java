@@ -34,19 +34,23 @@ public class Trip {
 	public String getStatus() { return status; }
 	public String getDriver() { return driver; }
 
-	// Serializes to: ID¶UsuarioID¶OrigenID¶DestinoID¶Precio¶Estado
-	// Adapting to plan: "ID¶UsuarioID¶OrigenID¶DestinoID¶Precio¶Estado"
+	// Serializes to: ID¶UsuarioID¶OrigenID¶DestinoID¶Precio¶Duracion¶Distancia¶Estado¶Conductor
 	public static String serialize(Trip trip){
-		return trip.getId() + "¶" + trip.getUser() + "¶" + trip.getOrigin() + "¶" + trip.getDestiny() + "¶" + trip.getPrice() + "¶" + trip.getStatus();
+		return trip.getId() + "¶" + 
+		       trip.getUser() + "¶" + 
+		       trip.getOrigin() + "¶" + 
+		       trip.getDestiny() + "¶" + 
+		       trip.getPrice() + "¶" + 
+		       trip.getDuration() + "¶" + 
+		       trip.getDistance() + "¶" + 
+		       trip.getStatus() + "¶" + 
+		       trip.getDriver();
 	}
 
-	// Helper for driver view (Code 800: ID¶OrigenNombre¶DestinoNombre¶Distancia)
-	// This would require resolving IDs to names, which is done in DatabaseWrapper or Logic
-	
 	public static Trip deserialize(String data){
 		try {
 			String[] parts = data.split("¶");
-			// Ensure we have enough parts, strict check or lenient
+			// Ensure we have enough parts
 			if (parts.length < 9) return null;
 			
 			String driverVal = parts[8].equals("null") ? null : parts[8];

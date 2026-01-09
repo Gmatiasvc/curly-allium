@@ -22,50 +22,39 @@ public class DatabaseWrapper {
 
     // --- 1xx: AUTENTICACIÓN Y REGISTRO ---
 
-    // 100: Login Genérico (Retorna User object con rol)
+    // 100: Login Genérico
     public User login(String identifier, String password) {
-        // Primero intentar como Usuario (Pasajero o Conductor)
-        String sqlUser = "SELECT nombre, correo, contraseña, salt, estado, fecha_registro, es_conductor FROM usuario WHERE nombre = ? OR correo = ?";
-        try (PreparedStatement stmt = this.conn.prepareStatement(sqlUser)) {
-            stmt.setString(1, identifier);
-            stmt.setString(2, identifier);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String storedHash = rs.getString("contraseña");
-                    String salt = rs.getString("salt");
-                    if (common.PasswordUtils.verifyPassword(password, storedHash, salt)) {
-                        return new User(
-                            rs.getString("nombre"),
-                            rs.getString("correo"),
-                            rs.getBoolean("estado"),
-                            String.valueOf(rs.getLong("fecha_registro")),
-                            false, // IsAdmin
-                            rs.getBoolean("es_conductor") // IsDriver
-                        );
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        // Fetch user and all their roles in one query
+        String sql = "SELECT u.id_usuario, u.nombre, u.correo, u.contraseña, u.salt, u.estado, u.fecha_registro, " +
+                     "GROUP_CONCAT(r.nombre) as roles " +
+                     "FROM usuario u " +
+                     "LEFT JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario " +
+                     "LEFT JOIN rol r ON ur.id_rol = r.id_rol " +
+                     "WHERE u.nombre = ? OR u.correo = ? " +
+                     "GROUP BY u.id_usuario";
 
-        // Si falla, intentar como Administrador
-        String sqlAdmin = "SELECT nombre, correo, contraseña, salt, estado, fecha_registro FROM administrador WHERE nombre = ? OR correo = ?";
-        try (PreparedStatement stmt = this.conn.prepareStatement(sqlAdmin)) {
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setString(1, identifier);
             stmt.setString(2, identifier);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     String storedHash = rs.getString("contraseña");
                     String salt = rs.getString("salt");
+                    
                     if (common.PasswordUtils.verifyPassword(password, storedHash, salt)) {
+                        String rolesObj = rs.getString("roles");
+                        String roles = rolesObj == null ? "" : rolesObj;
+                        
+                        boolean isAdmin = roles.contains("ADMIN");
+                        boolean isDriver = roles.contains("CONDUCTOR");
+
                         return new User(
                             rs.getString("nombre"),
                             rs.getString("correo"),
                             rs.getBoolean("estado"),
                             String.valueOf(rs.getLong("fecha_registro")),
-                            true, // IsAdmin
-                            false // IsDriver
+                            isAdmin,
+                            isDriver
                         );
                     }
                 }
@@ -89,67 +78,117 @@ public class DatabaseWrapper {
     private boolean registerGenericUser(String nombre, String correo, String password, boolean isDriver) {
         String salt = common.PasswordUtils.getSalt();
         String secureHash = common.PasswordUtils.hashPassword(password, salt);
-        // Assuming table 'usuario' has 'es_conductor' column
-        String sql = "INSERT INTO usuario (nombre, correo, contraseña, salt, estado, fecha_registro, es_conductor) VALUES (?, ?, ?, ?, ?, ?, ?)";
         
-        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
-            stmt.setString(1, nombre);
-            stmt.setString(2, correo);
-            stmt.setString(3, secureHash);
-            stmt.setString(4, salt);
-            stmt.setBoolean(5, true);    
-            stmt.setLong(6, System.currentTimeMillis());
-            stmt.setBoolean(7, isDriver);
+        String insertUser = "INSERT INTO usuario (nombre, correo, contraseña, salt, estado, fecha_registro) VALUES (?, ?, ?, ?, ?, ?)";
+        String insertRole = "INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)";
 
-            return stmt.executeUpdate() > 0;
+        try {
+            // Start transaction-like sequence
+            PreparedStatement stmtUser = this.conn.prepareStatement(insertUser, Statement.RETURN_GENERATED_KEYS);
+            stmtUser.setString(1, nombre);
+            stmtUser.setString(2, correo);
+            stmtUser.setString(3, secureHash);
+            stmtUser.setString(4, salt);
+            stmtUser.setBoolean(5, true);    
+            stmtUser.setLong(6, System.currentTimeMillis());
+            
+            int affected = stmtUser.executeUpdate();
+            if (affected == 0) return false;
+
+            int userId = -1;
+            try (ResultSet generatedKeys = stmtUser.getGeneratedKeys()) {
+                if (generatedKeys.next()) userId = generatedKeys.getInt(1);
+            }
+            stmtUser.close();
+
+            if (userId != -1) {
+                // Assign 'PASAJERO' role (ID 1)
+                PreparedStatement stmtRole = this.conn.prepareStatement(insertRole);
+                stmtRole.setInt(1, userId);
+                stmtRole.setInt(2, 1); 
+                stmtRole.executeUpdate();
+
+                // If driver, also assign 'CONDUCTOR' role (ID 2)
+                if (isDriver) {
+                    stmtRole.setInt(1, userId);
+                    stmtRole.setInt(2, 2);
+                    stmtRole.executeUpdate();
+                }
+                stmtRole.close();
+                return true;
+            }
         } catch (SQLException e) {
+            // Duplicate entry errors will be caught here
             e.printStackTrace(); 
-            return false;
         }
+        return false;
     }
 
-    // 105: Registro Administrador (Requiere Permiso 2)
+    // 105: Registro Administrador
     public boolean registerAdmin(String nombre, String correo, String password) {
         if (this.permissionLevel < 2) return false;
         
         String salt = common.PasswordUtils.getSalt();
         String secureHash = common.PasswordUtils.hashPassword(password, salt);
 
-        String sql = "INSERT INTO administrador (nombre, correo, contraseña, salt, estado, fecha_registro) VALUES (?, ?, ?, ?, ?, ?)";
+        String insertUser = "INSERT INTO usuario (nombre, correo, contraseña, salt, estado, fecha_registro) VALUES (?, ?, ?, ?, ?, ?)";
+        String insertRole = "INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)";
         
-        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
-            stmt.setString(1, nombre);
-            stmt.setString(2, correo);
-            stmt.setString(3, secureHash);
-            stmt.setString(4, salt);
-            stmt.setBoolean(5, true);    
-            stmt.setLong(6, System.currentTimeMillis());
+        try {
+            PreparedStatement stmtUser = this.conn.prepareStatement(insertUser, Statement.RETURN_GENERATED_KEYS);
+            stmtUser.setString(1, nombre);
+            stmtUser.setString(2, correo);
+            stmtUser.setString(3, secureHash);
+            stmtUser.setString(4, salt);
+            stmtUser.setBoolean(5, true);    
+            stmtUser.setLong(6, System.currentTimeMillis());
 
-            return stmt.executeUpdate() > 0;
+            int affected = stmtUser.executeUpdate();
+            if (affected == 0) return false;
+
+            int userId = -1;
+            try (ResultSet generatedKeys = stmtUser.getGeneratedKeys()) {
+                if (generatedKeys.next()) userId = generatedKeys.getInt(1);
+            }
+            stmtUser.close();
+
+            if (userId != -1) {
+                // Assign 'ADMIN' role (ID 3)
+                PreparedStatement stmtRole = this.conn.prepareStatement(insertRole);
+                stmtRole.setInt(1, userId);
+                stmtRole.setInt(2, 3);
+                stmtRole.executeUpdate();
+                stmtRole.close();
+                return true;
+            }
         } catch (SQLException e) {
             e.printStackTrace(); 
-            return false;
         }
+        return false;
     }
 
     // --- 2xx: CLIENTE / PASAJERO ---
 
     // 200: Datos Usuario
     public User getUserData(String username) {
-        // Reuse logic or query specific table based on known context
-        // Simplified for 'usuario' table primarily
-        String sql = "SELECT nombre, correo, estado, fecha_registro, es_conductor FROM usuario WHERE nombre = ?";
+        String sql = "SELECT u.nombre, u.correo, u.estado, u.fecha_registro, GROUP_CONCAT(r.nombre) as roles " +
+                     "FROM usuario u " +
+                     "LEFT JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario " +
+                     "LEFT JOIN rol r ON ur.id_rol = r.id_rol " +
+                     "WHERE u.nombre = ? GROUP BY u.id_usuario";
         try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setString(1, username);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
+                    String roles = rs.getString("roles");
+                    if (roles == null) roles = "";
                     return new User(
                         rs.getString("nombre"),
                         rs.getString("correo"),
                         rs.getBoolean("estado"),
                         String.valueOf(rs.getLong("fecha_registro")),
-                        false,
-                        rs.getBoolean("es_conductor")
+                        roles.contains("ADMIN"),
+                        roles.contains("CONDUCTOR")
                     );
                 }
             }
@@ -162,33 +201,26 @@ public class DatabaseWrapper {
     // 201: Obtener Mapa - Paraderos
     public List<Stop> getAllStops() {
         List<Stop> stops = new ArrayList<>();
-        // Assuming table 'paradero'
-        String sql = "SELECT nombre, distrito, dirección, latitud, longitud FROM paradero";
+        String sql = "SELECT nombre, distrito, direccion, latitud, longitud FROM paradero";
         
         try (PreparedStatement stmt = this.conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
-            
             while (rs.next()) {
                 stops.add(new Stop(
                     rs.getString("nombre"),
-                    rs.getString("dirección"),
+                    rs.getString("direccion"),
                     rs.getString("distrito"), 
                     rs.getDouble("latitud"),
                     rs.getDouble("longitud")
                 ));
             }
-        } catch (SQLException e) {
-            e.printStackTrace(); 
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return stops;
     }
 
     // 202: Obtener Mapa - Rutas
     public List<Route> getAllRoutes() {
         List<Route> routes = new ArrayList<>();
-        // Assuming table 'ruta' with joins for names if needed, or just IDs. 
-        // Objects/Route.java uses names for origin/dest, but DB uses IDs.
-        // We will fetch names to match the object.
         String sql = "SELECT p1.nombre as origen, p2.nombre as destino, r.distancia, r.tiempo, r.estado " +
                      "FROM ruta r " +
                      "JOIN paradero p1 ON r.origen = p1.id_paradero " +
@@ -198,7 +230,6 @@ public class DatabaseWrapper {
         try (PreparedStatement stmt = this.conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                // Route(String origin, String destiny, double distance, int duration)
                 routes.add(new Route(
                     rs.getString("origen"),
                     rs.getString("destino"),
@@ -206,9 +237,7 @@ public class DatabaseWrapper {
                     rs.getInt("tiempo")
                 ));
             }
-        } catch (SQLException e) {
-            e.printStackTrace(); 
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return routes;
     }
 
@@ -217,7 +246,9 @@ public class DatabaseWrapper {
         int userId = getUserId(username);
         if (userId == -1) return -1;
 
-        String sql = "INSERT INTO viaje (id_usuario, origen, destino, fecha, precio, distancia, estado) VALUES (?, ?, ?, ?, ?, ?, 'PENDIENTE')";
+        // FIXED: Added 'duracion' to the SQL Insert because the table requires it.
+        // Also estimating duration based on distance (2 mins per unit) to satisfy constraint.
+        String sql = "INSERT INTO viaje (id_usuario, origen, destino, fecha, precio, distancia, estado, duracion) VALUES (?, ?, ?, ?, ?, ?, 'PENDIENTE', ?)";
         try (PreparedStatement stmt = this.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, userId);
             stmt.setInt(2, originId);
@@ -225,6 +256,7 @@ public class DatabaseWrapper {
             stmt.setLong(4, System.currentTimeMillis());
             stmt.setDouble(5, price);
             stmt.setDouble(6, distance);
+            stmt.setInt(7, (int)(distance * 2)); // Placeholder duration: 2 units of time per distance unit
             
             int affected = stmt.executeUpdate();
             if (affected > 0) {
@@ -234,9 +266,7 @@ public class DatabaseWrapper {
                     }
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace(); 
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return -1;
     }
 
@@ -248,9 +278,7 @@ public class DatabaseWrapper {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return rs.getString("estado");
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return null;
     }
 
@@ -262,25 +290,18 @@ public class DatabaseWrapper {
             stmt.setString(2, newName);
             stmt.setString(3, username);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
     // 208: Cancelar Viaje
     public boolean cancelRide(int rideId, String username) {
         int userId = getUserId(username);
-        // Ensure user owns the ride and it's pending
         String sql = "UPDATE viaje SET estado = 'CANCELADO' WHERE id_viaje = ? AND id_usuario = ? AND estado = 'PENDIENTE'";
         try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setInt(1, rideId);
             stmt.setInt(2, userId);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
     // 209: Historial Pasajero
@@ -308,7 +329,7 @@ public class DatabaseWrapper {
 
     public boolean addStop(String nombre, String distrito, String direccion, double lat, double lon) {
         if (this.permissionLevel < 2) return false;
-        String sql = "INSERT INTO paradero (nombre, distrito, dirección, latitud, longitud) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO paradero (nombre, distrito, direccion, latitud, longitud) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setString(1, nombre); stmt.setString(2, distrito); stmt.setString(3, direccion);
             stmt.setDouble(4, lat); stmt.setDouble(5, lon);
@@ -318,7 +339,6 @@ public class DatabaseWrapper {
 
     public boolean removeStop(int stopId) {
         if (this.permissionLevel < 2) return false;
-        // Basic check skipped for brevity, real app should check FKs
         String sql = "DELETE FROM paradero WHERE id_paradero = ?";
         try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setInt(1, stopId);
@@ -356,8 +376,6 @@ public class DatabaseWrapper {
 
     // --- 7xx: CONDUCTOR (Permiso >= 1) ---
 
-    // 700: Obtener Solicitudes Pendientes
-    // Returns serialized list items: "ViajeID¶OrigenNombre¶DestinoNombre¶Distancia"
     public List<String> getPendingRides() {
         if (this.permissionLevel < 1) return null;
         List<String> rides = new ArrayList<>();
@@ -376,10 +394,8 @@ public class DatabaseWrapper {
         return rides;
     }
 
-    // 701: Aceptar Viaje
     public boolean acceptRide(int rideId, String driverUsername) {
         if (this.permissionLevel < 1) return false;
-        // Optionally get driver ID from username, but simplified here
         String sql = "UPDATE viaje SET estado = 'ACEPTADO', conductor = ? WHERE id_viaje = ? AND estado = 'PENDIENTE'";
         try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setString(1, driverUsername);
@@ -388,7 +404,6 @@ public class DatabaseWrapper {
         } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
-    // 702: Actualizar Estado Viaje (EN_CURSO, FINALIZADO)
     public boolean updateRideStatus(int rideId, String newStatus) {
         if (this.permissionLevel < 1) return false;
         String sql = "UPDATE viaje SET estado = ? WHERE id_viaje = ?";
