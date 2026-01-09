@@ -42,4 +42,29 @@ public class Trip {
 
 	// Helper for driver view (Code 800: ID¶OrigenNombre¶DestinoNombre¶Distancia)
 	// This would require resolving IDs to names, which is done in DatabaseWrapper or Logic
+	
+	public static Trip deserialize(String data){
+		try {
+			String[] parts = data.split("¶");
+			// Ensure we have enough parts, strict check or lenient
+			if (parts.length < 9) return null;
+			
+			String driverVal = parts[8].equals("null") ? null : parts[8];
+			
+			return new Trip(
+				Integer.parseInt(parts[0]), // id
+				parts[1],                   // user
+				Integer.parseInt(parts[2]), // origin
+				Integer.parseInt(parts[3]), // destiny
+				Double.parseDouble(parts[4]), // price
+				Integer.parseInt(parts[5]), // duration
+				Double.parseDouble(parts[6]), // distance
+				parts[7],                   // status
+				driverVal                   // driver
+			);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 }
