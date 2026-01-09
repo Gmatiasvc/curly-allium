@@ -16,7 +16,7 @@ public class AdminTUI {
     private String currentAdminEmail = null;
 
     public AdminTUI() {
-        this.db = new DatabaseWrapper(1, Connection.getInstance());
+        this.db = new DatabaseWrapper(1);
         this.input = new Scanner(System.in);
     }
 

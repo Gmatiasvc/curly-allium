@@ -1,15 +1,12 @@
 package server;
 
-import java.io.BufferedReader;
+import common.VanityConsole;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit; // To show current time in messages
-import common.VanityConsole;
+import java.util.concurrent.Executors; // To show current time in messages
+import java.util.concurrent.TimeUnit;
 
 public class ServerMain {
 
@@ -90,7 +87,7 @@ public class ServerMain {
 
         private Socket clientSocket;
         private String clientAddress;
-		private UserRequestHandler processor = new UserRequestHandler(); // Instance of Connection class to process requests
+		//private UserRequestHandler processor = new UserRequestHandler(); // Instance of Connection class to process requests
 
         public ClientHandler(Socket clientSocket, String clientAddress) {
             this.clientSocket = clientSocket;
@@ -99,52 +96,7 @@ public class ServerMain {
 
         @Override
         public void run() {
-            // Use try-with-resources for automatically closing streams and the socket
-            try (
-                    // Get input stream to read data from the client
-                    BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); // Get output stream to send data to the client, 'true' for auto-flushing
-                    PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);) {
-                String inputLine;
-                VanityConsole.info("Handler for " + clientAddress + " started.");
 
-                // Read lines from the client until the client closes the connection
-                // or sends a specific "bye" message.
-                while ((inputLine = in.readLine()) != null) {
-                    VanityConsole.shout("Received from " + clientAddress + ": " + inputLine);
-
-                    // Process the request 
-					String response = processor.processRequest(inputLine); // Process the request using the Connection class
-					
-					// Send the response back to the client
-					out.println(response);
-					out.flush();
-
-					VanityConsole.shout("Sent to " + clientAddress + ": " + response);
-
-                      if (inputLine.equalsIgnoreCase("bye")) {
-                        break; // Client requested to close connection
-                    }
-                }
-                VanityConsole.info("Client " + clientAddress + " has disconnected.");
-
-            } catch (IOException e) {
-                // Log any errors that occur during communication with this specific client
-                VanityConsole.error("Error handling client " + clientAddress + ": " + e.getMessage());
-                // e.printStackTrace(); // Uncomment for detailed stack trace for client errors
-            } finally {
-                // Ensure the client socket is closed, even if errors occurred.
-                // This releases the resources associated with the connection.
-                try {
-                    if (!clientSocket.isClosed()) {
-                        clientSocket.close();
-                        VanityConsole.info("Closed client connection: " + clientAddress);
-                    } else {
-                        VanityConsole.shout("Socket for " + clientAddress + " was already closed.");
-                    }
-                } catch (IOException e) {
-                    VanityConsole.error("Error closing client socket " + clientAddress + ": " + e.getMessage());
-                }
-            }
         }
     }
 }
