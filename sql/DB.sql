@@ -20,7 +20,7 @@ CREATE TABLE usuario (
   contraseña VARCHAR(100) NOT NULL,
   salt VARCHAR(45) NOT NULL,
   estado BOOLEAN DEFAULT TRUE,
-  fecha_registro BIGINT NOT NULL
+  fecha_registro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE rol (
@@ -45,17 +45,18 @@ CREATE TABLE conductor (
   id_usuario INT PRIMARY KEY,
   licencia VARCHAR(50) NOT NULL,
   estado BOOLEAN DEFAULT FALSE,
-  fecha_aprobacion BIGINT,
+  fecha_aprobacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
 );
 
 CREATE TABLE paradero (
   id_paradero INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(80) NOT NULL UNIQUE,
-  distrito VARCHAR(60),
-  direccion VARCHAR(255),
-  longitud DOUBLE,
-  latitud DOUBLE
+  distrito VARCHAR(60) DEFAULT NULL,
+  direccion VARCHAR(255) DEFAULT NULL,
+  longitud DOUBLE DEFAULT NULL,
+  latitud DOUBLE DEFAULT NULL,
+  estado BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE ruta (
@@ -69,6 +70,21 @@ CREATE TABLE ruta (
   FOREIGN KEY (destino) REFERENCES paradero(id_paradero)
 );
 
+CREATE TABLE solicitud (
+  id_solicitud INT AUTO_INCREMENT PRIMARY KEY,
+  id_usuario INT NOT NULL,
+  origen INT NOT NULL,
+  destino INT NOT NULL,
+  precio_estimado DOUBLE NOT NULL,
+  distancia DOUBLE NOT NULL,
+  tiempo_estimado DOUBLE NOT NULL,
+  estado TINYINT NOT NULL,
+  fecha_solicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
+  FOREIGN KEY (origen) REFERENCES paradero(id_paradero),
+  FOREIGN KEY (destino) REFERENCES paradero(id_paradero)
+);
+
 -- NECESSARY CHANGE: Added 'estado' and made conductor nullable/username
 CREATE TABLE viaje (
   id_viaje INT AUTO_INCREMENT PRIMARY KEY,
@@ -76,7 +92,7 @@ CREATE TABLE viaje (
   id_usuario INT NOT NULL,
   origen INT NOT NULL,
   destino INT NOT NULL,
-  fecha BIGINT NOT NULL,
+  fecha TIMESTAMP NOT NULL,
   precio DOUBLE NOT NULL,
   duracion INT NOT NULL,
   distancia DOUBLE NOT NULL,
@@ -91,7 +107,7 @@ CREATE TABLE historial_busqueda (
   id_usuario INT,
   origen INT,
   destino INT,
-  fecha BIGINT NOT NULL,
+  fecha TIMESTAMP NOT NULL,
   FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
   FOREIGN KEY (origen) REFERENCES paradero(id_paradero),
   FOREIGN KEY (destino) REFERENCES paradero(id_paradero)

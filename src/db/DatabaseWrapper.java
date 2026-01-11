@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp; // Importación necesaria para el nuevo tipo de dato
 import java.util.ArrayList;
 import java.util.List;
 import objects.Route;
@@ -48,11 +49,15 @@ public class DatabaseWrapper {
                         boolean isAdmin = roles.contains("ADMIN");
                         boolean isDriver = roles.contains("CONDUCTOR");
 
+                        // CAMBIO: Obtener Timestamp y convertir a millis para mantener compatibilidad con User.createdAtUT
+                        Timestamp ts = rs.getTimestamp("fecha_registro");
+                        String dateStr = (ts != null) ? String.valueOf(ts.getTime()) : "0";
+
                         return new User(
                             rs.getString("nombre"),
                             rs.getString("correo"),
                             rs.getBoolean("estado"),
-                            String.valueOf(rs.getLong("fecha_registro")),
+                            dateStr,
                             isAdmin,
                             isDriver
                         );
@@ -90,7 +95,8 @@ public class DatabaseWrapper {
             stmtUser.setString(3, secureHash);
             stmtUser.setString(4, salt);
             stmtUser.setBoolean(5, true);    
-            stmtUser.setLong(6, System.currentTimeMillis());
+            // CAMBIO: Usar setTimestamp en lugar de setLong
+            stmtUser.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
             
             int affected = stmtUser.executeUpdate();
             if (affected == 0) return false;
@@ -141,7 +147,8 @@ public class DatabaseWrapper {
             stmtUser.setString(3, secureHash);
             stmtUser.setString(4, salt);
             stmtUser.setBoolean(5, true);    
-            stmtUser.setLong(6, System.currentTimeMillis());
+            // CAMBIO: Usar setTimestamp en lugar de setLong
+            stmtUser.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
 
             int affected = stmtUser.executeUpdate();
             if (affected == 0) return false;
@@ -182,11 +189,16 @@ public class DatabaseWrapper {
                 if (rs.next()) {
                     String roles = rs.getString("roles");
                     if (roles == null) roles = "";
+                    
+                    // CAMBIO: Obtener Timestamp y convertir a millis
+                    Timestamp ts = rs.getTimestamp("fecha_registro");
+                    String dateStr = (ts != null) ? String.valueOf(ts.getTime()) : "0";
+
                     return new User(
                         rs.getString("nombre"),
                         rs.getString("correo"),
                         rs.getBoolean("estado"),
-                        String.valueOf(rs.getLong("fecha_registro")),
+                        dateStr,
                         roles.contains("ADMIN"),
                         roles.contains("CONDUCTOR")
                     );
@@ -221,11 +233,7 @@ public class DatabaseWrapper {
     // 202: Obtener Mapa - Rutas
     public List<Route> getAllRoutes() {
         List<Route> routes = new ArrayList<>();
-        String sql = "SELECT p1.nombre as origen, p2.nombre as destino, r.distancia, r.tiempo, r.estado " +
-                     "FROM ruta r " +
-                     "JOIN paradero p1 ON r.origen = p1.id_paradero " +
-                     "JOIN paradero p2 ON r.destino = p2.id_paradero " +
-                     "WHERE r.estado = true";
+        String sql = "SELECT r.origen, r.destino, r.distancia, r.tiempo, r.estado FROM ruta r WHERE r.estado = true";
         
         try (PreparedStatement stmt = this.conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -245,31 +253,56 @@ public class DatabaseWrapper {
     public int requestRide(String username, int originId, int destId, double price, double distance) {
         int userId = getUserId(username);
         if (userId == -1) return -1;
-
-        // FIXED: Added 'duracion' to the SQL Insert because the table requires it.
-        // Also estimating duration based on distance (2 mins per unit) to satisfy constraint.
-        String sql = "INSERT INTO viaje (id_usuario, origen, destino, fecha, precio, distancia, estado, duracion) VALUES (?, ?, ?, ?, ?, ?, 'PENDIENTE', ?)";
-        try (PreparedStatement stmt = this.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    
+        // 1. Insertar en la tabla VIAJE (Lógica actual necesaria para el flujo)
+        String sqlViaje = "INSERT INTO viaje (id_usuario, origen, destino, fecha, precio, distancia, estado, duracion) VALUES (?, ?, ?, ?, ?, ?, 'PENDIENTE', ?)";
+        
+        // 2. Insertar también en la tabla SOLICITUD (Nueva lógica)
+        String sqlSolicitud = "INSERT INTO solicitud (id_usuario, origen, destino, precio_estimado, distancia, tiempo_estimado, estado) VALUES (?, ?, ?, ?, ?, ?, 1)"; 
+        // Nota: Asumimos estado 1 = Pendiente para TINYINT
+    
+        int generatedId = -1;
+    
+        try {
+            // --- Insertar en VIAJE ---
+            PreparedStatement stmt = this.conn.prepareStatement(sqlViaje, Statement.RETURN_GENERATED_KEYS);
             stmt.setInt(1, userId);
             stmt.setInt(2, originId);
             stmt.setInt(3, destId);
-            stmt.setLong(4, System.currentTimeMillis());
+            stmt.setTimestamp(4, new Timestamp(System.currentTimeMillis())); // Usando Timestamp corregido
             stmt.setDouble(5, price);
             stmt.setDouble(6, distance);
-            stmt.setInt(7, (int)(distance * 2)); // Placeholder duration: 2 units of time per distance unit
+            int duration = (int)(distance * 2); // Estimación
+            stmt.setInt(7, duration);
             
             int affected = stmt.executeUpdate();
             if (affected > 0) {
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        return generatedKeys.getInt(1);
+                        generatedId = generatedKeys.getInt(1);
                     }
                 }
             }
+            stmt.close();
+    
+            // --- Insertar en SOLICITUD (Si viaje fue exitoso) ---
+            if (generatedId != -1) {
+                PreparedStatement stmtSol = this.conn.prepareStatement(sqlSolicitud);
+                stmtSol.setInt(1, userId);
+                stmtSol.setInt(2, originId);
+                stmtSol.setInt(3, destId);
+                stmtSol.setDouble(4, price);
+                stmtSol.setDouble(5, distance);
+                stmtSol.setDouble(6, duration); // tiempo_estimado
+                
+                stmtSol.executeUpdate();
+                stmtSol.close();
+            }
+    
         } catch (SQLException e) { e.printStackTrace(); }
-        return -1;
+        
+        return generatedId; // Retornamos el ID del viaje para que el cliente pueda rastrearlo
     }
-
     // 206: Consultar Estado de Viaje
     public String getRideStatus(int rideId) {
         String sql = "SELECT estado FROM viaje WHERE id_viaje = ?";
@@ -425,4 +458,6 @@ public class DatabaseWrapper {
         } catch (SQLException e) { e.printStackTrace(); }
         return -1;
     }
+
+
 }

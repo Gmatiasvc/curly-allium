@@ -408,13 +408,15 @@ public class UnitTests {
             String rideResp = client.requestRide(originId, destId, 10.5, 5.0);
             VanityConsole.debug("Client: Request Ride Response -> " + rideResp);
             
-            if (rideResp.startsWith("200")) {
+            if (rideResp.startsWith("305")) {
                 // Parse Ride ID for cancellation test
                 // Response format: 200§RideID
                 String[] parts = rideResp.split("§");
                 if (parts.length > 1) {
                     try {
-                        int rideId = Integer.parseInt(parts[1]);
+                        String[] dataParts = parts[1].split("¶");
+
+                        int rideId = Integer.parseInt(dataParts[0]);
                         
                         // 6. Check History (Expanded Test)
                         List<String> history = client.getHistory();

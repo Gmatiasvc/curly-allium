@@ -8,8 +8,8 @@ public class Trip {
 	double price;
 	int duration;
 	double distance;
-	String status; // PENDIENTE, ACEPTADO, EN_CURSO, FINALIZADO
-	String driver; // Username or ID of the driver
+	String status; 
+	String driver; 
 
 	public Trip(int id, String user, int origin, int destiny, double price, int duration, double distance, String status, String driver) {
 		this.id = id;
